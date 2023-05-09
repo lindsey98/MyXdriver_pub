@@ -1,0 +1,11 @@
+*.pyc
+__pycache__
+mitmdump
+chromedriver
+geckodriver
+operadriver
+MANIFEST
+dist
+*.pth*
+*.tar*
+*.pkl*
