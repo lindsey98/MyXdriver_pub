@@ -711,35 +711,35 @@ var obfuscate_input = function(){
 //     }
 //
 // }
-var obfuscate_input_image = function(){
-
-    let labelslist = document.getElementsByTagName('label'); // get all inputs
-    for (let i = 0; i <= labelslist.length; i++) {
-        let label = labelslist[i];
-
-        console.log(label);
-
-        html2canvas(label).then((canvas) => {
-          let newb = document.createElement("button");
-          try{
-              label.parentNode.insertBefore(newb, label);
-              let dataurl = canvas.toDataURL("image/png");
-
-              newb.style.backgroundImage = "url(" + dataurl + ")";
-              newb.style.height = canvas.height;
-              newb.style.width = canvas.width;
-              newb.style.left = window.scrollX + label.getBoundingClientRect().left + "px";
-              newb.style.top = window.scrollY + label.getBoundingClientRect().top + "px";
-              newb.innerHTML = '';
-          }
-          catch(err){
-              console.log(err);
-          }
-
-        });
-
-        }
-}
+// var obfuscate_input_image = function(){
+//
+//     let labelslist = document.getElementsByTagName('label'); // get all inputs
+//     for (let i = 0; i <= labelslist.length; i++) {
+//         let label = labelslist[i];
+//
+//         console.log(label);
+//
+//         html2canvas(label).then((canvas) => {
+//           let newb = document.createElement("button");
+//           try{
+//               label.parentNode.insertBefore(newb, label);
+//               let dataurl = canvas.toDataURL("image/png");
+//
+//               newb.style.backgroundImage = "url(" + dataurl + ")";
+//               newb.style.height = canvas.height;
+//               newb.style.width = canvas.width;
+//               newb.style.left = window.scrollX + label.getBoundingClientRect().left + "px";
+//               newb.style.top = window.scrollY + label.getBoundingClientRect().top + "px";
+//               newb.innerHTML = '';
+//           }
+//           catch(err){
+//               console.log(err);
+//           }
+//
+//         });
+//
+//         }
+// }
 
 var obfuscate_button = function(){
         // get all <button>

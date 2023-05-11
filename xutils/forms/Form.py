@@ -20,17 +20,15 @@ class Form():
     _unknown_label = "UNKNOWN"
     verifiable_inputs = {Regexes.PASSWORD, Regexes.USERID, Regexes.USERNAME}
 
-    def __init__(self, driver, phishintention_cls,
+    def __init__(self, driver,
+                 phishintention_cls,
                  mmocr_model,
                  submission_button_locator,
-                 ocr_type='mmocr',
                  rule_matching=True,
                  obfuscate=False):
 
         self._driver = driver
         self.PhishIntention = phishintention_cls
-        # pre-load OCR model
-        self.ocr_type = ocr_type
         self._mmocr_model = mmocr_model
         self._submission_button_locator = submission_button_locator
         self.obfuscate = obfuscate
@@ -90,7 +88,6 @@ class Form():
 		Detect text in the element by OCR
 	"""
     def _call_ocr(self, input_ele_loc):
-        assert self.ocr_type in ['mmocr', 'googleocr']
         try:
             screenshot_img = Image.open(io.BytesIO(base64.b64decode(self._driver.get_screenshot_encoding())))
         except:
@@ -102,32 +99,6 @@ class Form():
         ele_screenshot_arr = np.asarray(ele_screenshot)
         ele_screenshot_arr = np.flip(ele_screenshot_arr, -1)  # RGB2BGR
 
-        if self.ocr_type == 'mmocr':
-            try:
-                result = self._mmocr_model.readtext(img=ele_screenshot_arr, print_result=False)
-            except:
-                return ''
-            if len(result) > 0:
-                if len(result[0]['text']) > 0:
-                    return result[0]['text']
-            return ''
-        else:
-            raise NotImplementedError
-
-    """
-        Detect text in the element by OCR (on elements screenshot)
-    """
-    def _call_ocr_element(self, element):
-        assert self.ocr_type in ['mmocr', 'googleocr']
-        try:
-            ele_screenshot = Image.open(io.BytesIO(base64.b64decode(element.screenshot_as_base64)))
-        except:
-            return ''
-        ele_screenshot = ele_screenshot.convert("RGB")
-        ele_screenshot_arr = np.asarray(ele_screenshot)
-        ele_screenshot_arr = np.flip(ele_screenshot_arr, -1)  # RGB2BGR
-
-        # if self.ocr_type == 'mmocr':
         try:
             result = self._mmocr_model.readtext(img=ele_screenshot_arr, print_result=False)
         except:
@@ -137,24 +108,27 @@ class Form():
                 return result[0]['text']
         return ''
 
-        # else:
-        #     client = vision.ImageAnnotatorClient()
-        #     ele_screenshot.save(os.path.join(os.path.dirname(__file__), 'tmp.png'))
-        #     with io.open(os.path.join(os.path.dirname(__file__), 'tmp.png'), 'rb') as image_file:
-        #         content = image_file.read()
-        #     image = vision.Image(content=content)
-        #
-        #     response = client.text_detection(image=image, image_context={
-        #         "language_hints": ["en-t-i0-handwrit",
-        #                            "zh-t-i0-handwrit",
-        #                            "ja-t-i0-handwrit"]})  # support chinese and japanese
-        #     texts = response.text_annotations
-        #     returned_strings = []
-        #     for text in texts:
-        #         returned_strings.append(text.description)
-        #     if len(returned_strings) > 0:
-        #         return returned_strings[0]
-        #     return ''
+    """
+        Detect text in the element by OCR (on elements screenshot)
+    """
+    def _call_ocr_element(self, element):
+        try:
+            ele_screenshot = Image.open(io.BytesIO(base64.b64decode(element.screenshot_as_base64)))
+        except:
+            return ''
+        ele_screenshot = ele_screenshot.convert("RGB")
+        ele_screenshot_arr = np.asarray(ele_screenshot)
+        ele_screenshot_arr = np.flip(ele_screenshot_arr, -1)  # RGB2BGR
+
+        try:
+            result = self._mmocr_model.readtext(img=ele_screenshot_arr, print_result=False)
+        except:
+            return ''
+        if len(result) > 0:
+            if len(result[0]['text']) > 0:
+                return result[0]['text']
+        return ''
+
     """
 		Get all input elements and their matched filling rules
 	"""
@@ -313,13 +287,13 @@ class Form():
                     FE = FormElement(self._driver, element)
                     matched_rule_relaxed, matched_rule_strict = FE._decide_rule_buttons()
 
-                    if matched_rule_strict == True:
+                    if matched_rule_strict:
                         filter_elements.insert(0, element)
                         filter_elements_dom.insert(0, element_dom)
                         rules.insert(0, matched_rule_strict)
                         visibilities.insert(0, visible)
                         locations.insert(0, element_loc)
-                    elif matched_rule_relaxed == True:
+                    elif matched_rule_relaxed:
                         filter_elements.append(element)
                         filter_elements_dom.append(element_dom)
                         rules.append(matched_rule_relaxed)
@@ -385,8 +359,8 @@ class Form():
 		Sort buttons based on connectedness and proximity
 	"""
 
-    def sort_buttons_by_affinity_to_inputs(self, alpha=0., screenH=1080,
-                                           forbidden_input_etypes=['hidden', "submit", "reset", "search"]):
+    def sort_buttons_by_affinity_to_inputs(self, screenH=1080):
+        forbidden_input_etypes = ['hidden', "submit", "reset", "search"]
         # Filter input locations, ignore checkbox, radio buttons, ignore zero-area inputs
         input_locations = [self._inputs_locations[ii] for ii in range(len(self._inputs_locations)) if
                            self._input_etypes[ii] not in forbidden_input_etypes and \
@@ -450,7 +424,7 @@ class Form():
             element = self._buttons[0]  # fixme: I only click the most relevant button for conservativeness
 
         etext = self._driver.get_text(element)
-        if not len(etext):
+        if etext and len(etext)>0:
             etext = self._driver.get_attribute(element, "value")
         Logger.spit("Try clicking button {} ...".format(etext), debug=True,
                     caller_prefix=Form._caller_prefix)

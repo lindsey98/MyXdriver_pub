@@ -23,26 +23,28 @@ import os
 from phishintention.src.OCR_siamese_utils.utils import brand_converter, resolution_alignment
 import pickle
 import tldextract
+import socket
+
 '''I re-implement PhishIntention to be better integrated with XDriver,
 the CRP classifier and Siamese are using the real-time screenshot and HTML'''
 class PhishIntentionWrapper():
 
     _caller_prefix = "PhishIntentionWrapper"
-    SIAMESE_THRE_RELAX = 0.83
+    SIAMESE_THRE_RELAX = 0.85
     _RETRIES = 3
     _DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 
-    def __init__(self):
-        self.AWL_MODEL, self.CRP_CLASSIFIER, self.CRP_LOCATOR_MODEL, self.SIAMESE_MODEL, self.OCR_MODEL, self.SIAMESE_THRE, self.LOGO_FEATS, self.LOGO_FILES, self.DOMAIN_MAP_PATH = load_config(
-            None)
+    def __init__(self, reload_targetlist=False):
+        self.AWL_MODEL, self.CRP_CLASSIFIER, self.CRP_LOCATOR_MODEL, self.SIAMESE_MODEL, self.OCR_MODEL, self.SIAMESE_THRE, self.LOGO_FEATS, self.LOGO_FILES, self.DOMAIN_MAP_PATH = load_config(device=self._DEVICE, reload_targetlist=reload_targetlist)
         self.CRP_CLASSIFIER.to(PhishIntentionWrapper._DEVICE)
         self.OCR_MODEL.to(PhishIntentionWrapper._DEVICE)
 
     def reset_model(self, config_path):
         self.AWL_MODEL, self.CRP_CLASSIFIER, self.CRP_LOCATOR_MODEL, self.SIAMESE_MODEL, self.OCR_MODEL, self.SIAMESE_THRE, \
-        self.LOGO_FEATS, self.LOGO_FILES, self.DOMAIN_MAP_PATH = load_config(config_path)
+        self.LOGO_FEATS, self.LOGO_FILES, self.DOMAIN_MAP_PATH = load_config(cfg_path=config_path, device=self._DEVICE)
         self.CRP_CLASSIFIER.to(PhishIntentionWrapper._DEVICE)
         self.OCR_MODEL.to(PhishIntentionWrapper._DEVICE)
+        print('Length of reference list = {}'.format(len(self.LOGO_FEATS)))
 
     def return_logo_feat(self, logo: Image):
         img_feat = pred_siamese_OCR(img=logo,
@@ -129,6 +131,25 @@ class PhishIntentionWrapper():
 
         return None, None, top3_simlist[0]
 
+    def phishpedia_classifier_OCR_reimplement(self, domain_map_path, reference_logo, url):
+        # targetlist domain list
+        pred_target, siamese_conf = None, None
+        with open(domain_map_path, 'rb') as handle:
+            domain_map = pickle.load(handle)
+
+        target_this, domain_this, this_conf = self.siamese_inference_OCR_reimplement(domain_map, reference_logo)
+
+        # domain matcher to avoid FP
+        if (target_this is not None) and (tldextract.extract(url).domain not in domain_this):
+            # avoid fp due to godaddy domain parking, ignore webmail provider (ambiguous)
+            # if target_this == 'GoDaddy' or target_this == "Webmail Provider" or target_this == "Government of the United Kingdom":
+            #     target_this = None  # ignore the prediction
+            #     this_conf = None
+            pred_target = target_this
+            siamese_conf = this_conf
+
+        return pred_target, siamese_conf
+
     @staticmethod
     def element_recognition_reimplement(img_arr: np.ndarray, model):
         pred = model(img_arr)
@@ -166,25 +187,6 @@ class PhishIntentionWrapper():
             conf = F.softmax(pred_orig, dim=-1).detach().cpu()
 
         return pred, conf, pred_features
-
-    @staticmethod
-    def iterative_visiting_url(driver: XDriver, url):
-        retry_trail = 1
-        return_success = driver.get(url)
-
-        while retry_trail <= PhishIntentionWrapper._RETRIES:
-            if return_success:
-                break
-            else:
-                retry_trail += 1
-                driver.quit()  # attempt to reboot the driver
-                driver.boot(chrome=True)
-                driver.set_page_load_timeout(15)
-                driver.set_script_timeout(15)
-                driver.clean_up_window()
-                return_success = driver.get(url)
-                time.sleep(3)
-        return return_success
 
     def return_all_bboxes(self, screenshot_encoding):
         screenshot_img = Image.open(io.BytesIO(base64.b64decode(screenshot_encoding)))
@@ -348,21 +350,22 @@ class PhishIntentionWrapper():
                         ret_password, ret_username = driver.get_all_visible_username_password_inputs()
                         num_username, num_password = len(ret_username), len(ret_password)
                         # Call CRP classifier
-                        # cre_pred = self.crp_classifier_reimplement(num_username=num_username,
-                        #                                            num_password=num_password,
-                        #                                            screenshot_encoding=new_screenshot_encoding)
-                        # if cre_pred == 0:  # this is an CRP
-                        #     reach_crp = True
-                        #     break  # stop when reach an CRP already
-                        # fixme: I break the loop anyway
-                        reach_crp = True
-                        break  # stop when reach an CRP already
+                        cre_pred = self.crp_classifier_reimplement(num_username=num_username,
+                                                                   num_password=num_password,
+                                                                   screenshot_encoding=new_screenshot_encoding)
+                        if cre_pred == 0:  # this is an CRP
+                            reach_crp = True
+                            break  # stop when reach an CRP already
                         driver.switch_to_window(current_window)
+                        # fixme: I break the loop anyway
+                        # reach_crp = True
+                        # break  # stop when reach an CRP already
 
                 if not reach_crp:
                     # Back to the original site if CRP not found
-                    return_success = self.iterative_visiting_url(driver, orig_url)
-                    if not return_success:
+                    try:
+                        driver.get(orig_url)
+                    except:
                         Logger.spit("Cannot go back to the original URL, Exit ...", warning=True,
                                     caller_prefix=PhishIntentionWrapper._caller_prefix)
                         return reach_crp, orig_url, current_url  # TIMEOUT Error
@@ -435,12 +438,13 @@ class PhishIntentionWrapper():
                         break  # stop when reach an CRP already
                     driver.switch_to_window(current_window)
 
-            if not reach_crp:
-                # Back to the original site if CRP not found
-                return_success = self.iterative_visiting_url(driver, orig_url)
-                if not return_success:
-                    Logger.spit("Cannot go back to the original URL, Exit ...", warning=True, caller_prefix=PhishIntentionWrapper._caller_prefix)
-                    return reach_crp, orig_url, current_url  # TIMEOUT Error
+                if not reach_crp:
+                    # Back to the original site if CRP not found
+                    try:
+                        driver.get(orig_url)
+                    except:
+                        Logger.spit("Cannot go back to the original URL, Exit ...", warning=True, caller_prefix=PhishIntentionWrapper._caller_prefix)
+                        return reach_crp, orig_url, current_url  # TIMEOUT Error
 
         return reach_crp, orig_url, current_url
 
@@ -457,39 +461,86 @@ class PhishIntentionWrapper():
 
         # If HTML login finder did not find CRP, call CV-based login finder
         if not reach_crp:
-            return_success = self.iterative_visiting_url(driver, orig_url)
-            if not return_success:
+            reach_crp, orig_url, current_url = self.crp_locator_cv_reimplement(driver=driver)
+            Logger.spit(
+                'After CV login finder, reach a CRP page ? {}, \n Original URL = {}, \n Current URL = {}'.format(
+                    reach_crp, orig_url, current_url),
+                debug=True,
+                caller_prefix=PhishIntentionWrapper._caller_prefix)
+
+
+        if reach_crp:
+            successful = True
+        else:
+            try:
+                driver.get(orig_url)
+            except:
                 Logger.spit("Cannot go back to the original URL, Exit ...", warning=True,
                             caller_prefix=PhishIntentionWrapper._caller_prefix)
                 return successful, orig_url, current_url  # load URL unsuccessful
 
-        if reach_crp:
-            successful = True
 
         return successful, orig_url, current_url
 
-    def phishpedia_classifier_OCR_reimplement(self, domain_map_path, reference_logo, url):
-        # targetlist domain list
-        pred_target, siamese_conf = None, None
-        with open(domain_map_path, 'rb') as handle:
-            domain_map = pickle.load(handle)
+    def dynamic_analysis_and_save_reimplement(self, orig_url,
+                                              screenshot_path,
+                                              driver: XDriver):
 
-        target_this, domain_this, this_conf = self.siamese_inference_OCR_reimplement(domain_map, reference_logo)
+        new_screenshot_path = screenshot_path.replace('shot.png', 'new_shot.png')
+        new_info_path = new_screenshot_path.replace('new_shot.png', 'new_info.txt')
+        process_time = 0.
 
-        # domain matcher to avoid FP
-        if (target_this is not None) and (tldextract.extract(url).domain not in domain_this):
-            # avoid fp due to godaddy domain parking, ignore webmail provider (ambiguous)
-            # if target_this == 'GoDaddy' or target_this == "Webmail Provider" or target_this == "Government of the United Kingdom":
-            #     target_this = None  # ignore the prediction
-            #     this_conf = None
-            pred_target = target_this
-            siamese_conf = this_conf
+        # get url
+        successful = False  # reach CRP or not?
+        try:
+            driver.get(orig_url)
+            time.sleep(3)
+        except:
+            return orig_url, screenshot_path, successful, process_time
 
-        return pred_target, siamese_conf
+        # HTML heuristic based login finder
+        start_time = time.time()
+        reach_crp, orig_url, current_url = self.crp_locator_keyword_heuristic_reimplement(driver=driver)
+        process_time += time.time() - start_time
+        Logger.spit('After HTML keyword finder, reach a CRP page ? {}, \n Original URL = {}, \n Current URL = {}'.format(reach_crp, orig_url, current_url),
+                    debug=True,
+                    caller_prefix=PhishIntentionWrapper._caller_prefix)
+
+        # If HTML login finder did not find CRP, call CV-based login finder
+        if not reach_crp:
+            reach_crp, orig_url, current_url = self.crp_locator_cv_reimplement(driver=driver)
+            Logger.spit(
+                'After CV login finder, reach a CRP page ? {}, \n Original URL = {}, \n Current URL = {}'.format(
+                    reach_crp, orig_url, current_url),
+                debug=True,
+                caller_prefix=PhishIntentionWrapper._caller_prefix)
+
+
+        if not reach_crp:
+            try:
+                driver.get(orig_url)
+            except:
+                Logger.spit("Cannot go back to the original URL, Exit ...", warning=True,
+                            caller_prefix=PhishIntentionWrapper._caller_prefix)
+            return orig_url, screenshot_path, successful, process_time  # load URL unsuccessful
+
+
+        # FIXME: update the screenshots
+        try:
+            driver.save_screenshot(new_screenshot_path)
+        except Exception as e:
+            return orig_url, screenshot_path, successful, process_time  # save updated screenshot unsucessful
+
+        with open(new_info_path, 'w', encoding='ISO-8859-1') as f:
+            f.write(current_url)
+        if reach_crp:
+            successful = True
+
+        return current_url, new_screenshot_path, successful, process_time
 
     '''This is the original PhishIntention test script, it assumes we have already crawled the screenshot and the HTML, it is not integrated with XDriver'''
     '''The CRP classification part is pure static'''
-    def test_orig_phishintention(self, url, screenshot_path):
+    def test_orig_phishintention(self, url, screenshot_path, driver: XDriver):
 
         waive_crp_classifier = False
         dynamic = False
@@ -552,11 +603,13 @@ class PhishIntentionWrapper():
                            dynamic_time) + '|' + str(process_time), \
                        pred_boxes, pred_classes
 
+            # first time entering the loop
             if not waive_crp_classifier:
                 pred_target_initial = pred_target
                 url_orig = url
-            else:
-                if pred_target_initial != pred_target: # the page before and after transition are matched to different target
+            else: # second time entering the loop
+                # the page before and after transition are matched to different target
+                if pred_target_initial != pred_target:
                     print('After CRP transition, the logo\'s brand has changed, report as benign')
                     return phish_category, pred_target, plotvis, siamese_conf, dynamic, \
                            str(ele_detector_time) + '|' + str(siamese_time) + '|' + str(crp_time) + '|' + str(
@@ -577,26 +630,21 @@ class PhishIntentionWrapper():
                     cre_pred, cred_conf, _ = credential_classifier_mixed_al(img=screenshot_path, coords=pred_boxes,
                                                                             types=pred_classes, model=self.CRP_CLASSIFIER)
                 crp_time = time.time() - start_time
+                print('CRP prediction after static analysis (0 is CRP, 1 is non CRP) = {}'.format(cre_pred))
 
-              ######################## Step4: Dynamic analysis #################################
+                ######################## Step4: Dynamic analysis #################################
                 if cre_pred == 1:
-
+                    print('Enter dynamic CRP finder')
                     waive_crp_classifier = True  # only run dynamic analysis ONCE
-                    # # load driver ONCE!
-                    driver = driver_loader()
-                    driver.set_page_load_timeout(15)
-                    driver.set_script_timeout(15)
-                    print('Finish loading webdriver')
-                    # load chromedriver
+                    # dynamic
                     start_time = time.time()
-                    url, screenshot_path, successful, process_time = dynamic_analysis(url=url,
+                    try:
+                        url, screenshot_path, successful, process_time = self.dynamic_analysis_and_save_reimplement(orig_url=url,
                                                                                       screenshot_path=screenshot_path,
-                                                                                      cls_model=self.CRP_CLASSIFIER,
-                                                                                      ele_model=self.AWL_MODEL,
-                                                                                      login_model=self.CRP_LOCATOR_MODEL,
                                                                                       driver=driver)
+                    except selenium.common.exceptions.TimeoutException:
+                        successful = False
                     dynamic_time = time.time() - start_time
-                    driver.quit()
 
                     # If dynamic analysis did not reach a CRP
                     if successful == False or tldextract.extract(url).domain != tldextract.extract(url_orig).domain:

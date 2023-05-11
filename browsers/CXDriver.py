@@ -1,18 +1,19 @@
 #!/usr/bin/python
 
-from selenium.webdriver import ChromeOptions
-
+# from selenium.webdriver import ChromeOptions
+from seleniumwire.webdriver import ChromeOptions
+from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from xdriver.xutils.Logger import Logger
 from xdriver.xutils.Exceptions import *
 from xdriver.xutils.proxy.ProxyWrapper import ProxyWrapper
-
-
+import xdriver.CONFIGS as configs
 from uuid import uuid4
 from pyvirtualdisplay import Display
 import os
 import json
-
+import time
 from xdriver.XDriver import XDriver
+
 
 class CXDriver(XDriver):
 	_caller_prefix = "CXDriver"
@@ -31,15 +32,18 @@ class CXDriver(XDriver):
 		"no_blink_feature": ["--disable-blink-features=AutomationControlled"],
 	}
 
+	_recoverable_crashes = ["chrome not reachable", "page crash",
+							"cannot determine loading status", "Message: unknown error"]
+
 	def __init__(self, **kwargs):
 		_white_lists = {}
-		with open(os.path.join(CXDriver._abs_path, "config/webdrivers/lang.txt")) as langf:
+		with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "config/webdrivers/lang.txt")) as langf:
 			for i in langf.readlines():
 				i = i.strip()
 				text = i.split(' ')
 				_white_lists[text[1]] = 'en'
 		prefs = {
-			"translate": {"enabled": "true"},
+			"translate": {"enabled": True},
 			"translate_whitelists": _white_lists,
 			"download_restrictions": 3,
 			"download.prompt_for_download": False,
@@ -48,18 +52,33 @@ class CXDriver(XDriver):
 
 		_chromeOpts = ChromeOptions()
 		## Experimental ## -- Solves "session deleted because of page crash" errors
-		_chromeOpts.add_experimental_option("prefs", prefs)
+
 		_chromeOpts.add_argument("--no-sandbox")
 		_chromeOpts.add_argument("--disable-dev-shm-usage")
 		_chromeOpts.add_argument('--disable-gpu')
 		_chromeOpts.add_argument("--enable-logging=stderr --v=1")
 		_chromeOpts.add_argument('--disable-site-isolation-trials')
-		_chromeOpts.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4951.67 Safari/537.36")
-		_chromeOpts.add_experimental_option('useAutomationExtension', False)
-		_chromeOpts.add_experimental_option("excludeSwitches", ["enable-automation"])
+		# TODO: replace with your own user-agent
+		# _chromeOpts.add_argument(
+		# 	"user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36")
+		_chromeOpts.add_argument(
+			"user-agent=user-agent={}".format(configs.user_agent))
+
 		_chromeOpts.set_capability('unhandledPromptBehavior', 'dismiss')  # dismiss
 		_chromeOpts.set_capability('pageLoadStrategy', 'eager')
 		_chromeOpts.add_argument("--log-level=2")
+		_chromeOpts.add_argument("--window-size=1920,1080")  # fix screenshot size
+		_chromeOpts.add_argument("--lang=en")
+
+		_chromeOpts.add_experimental_option("prefs", prefs)
+		_chromeOpts.add_experimental_option('useAutomationExtension', False)
+		_chromeOpts.add_experimental_option("excludeSwitches", ["enable-automation"])
+		_chromeOpts.add_argument("--disable-blink-features=AutomationControlled")
+
+		_capabilities = DesiredCapabilities.CHROME
+		_capabilities["goog:loggingPrefs"] = {"performance": "ALL"}  # chromedriver 75+
+		_capabilities["unexpectedAlertBehaviour"] = "dismiss"  # handle alert
+		_capabilities["pageLoadStrategy"] = "eager"  # eager mode #FIXME: set eager mode, may load partial webpage
 
 		#################
 		if CXDriver._base_config["browser"]["enabled"]:
@@ -73,6 +92,7 @@ class CXDriver(XDriver):
 		if not self._profile:
 			self._profile = os.path.join(self._abs_profiles_path, "xdriver-%s" % str(uuid4()))
 			CXDriver._base_config["browser"]["profile"] = self._profile # Will be used if browser is rebooted
+			# os.makedirs(self._profile, exist_ok=True)
 
 		Logger.spit("Setting custom profile to: %s" % self._profile, caller_prefix = CXDriver._caller_prefix)
 		_chromeOpts.add_argument("--user-data-dir=%s" % self._profile)
@@ -94,10 +114,11 @@ class CXDriver(XDriver):
 		os.environ['DISPLAY'] = os.environ.get('DISPLAY', ':0') # By default output instance to the environment `DISPLAY` (can be already set)
 		self._virtual_display = None
 		if not CXDriver._base_config["browser"]["headless"] and CXDriver._base_config["browser"]["virtual"]: # Start virtual display, if instructed and only if not headless
-			self._virtual_display = Display(visible = 0, size = (1920, 1080))
+			self._virtual_display = Display(visible = False, size = (1920, 1080))
 			self._virtual_display.start()
 
-		super(CXDriver, self).__init__(executable_path = self._exec_path, chrome_options = _chromeOpts, **kwargs) # Launch!
+		super(CXDriver, self).__init__(executable_path = self._exec_path, chrome_options = _chromeOpts, desired_capabilities=_capabilities, **kwargs) # Launch!
+
 		self.add_script(CXDriver._base_config["xdriver"]["scripts"]) # Add scripts to be evaluated on each new document
 
 	# Kudos: https://stackoverflow.com/a/47298910 + black widow (https://www.cse.chalmers.se/research/group/security/black-widow/)

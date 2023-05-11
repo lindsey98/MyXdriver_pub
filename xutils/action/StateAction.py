@@ -14,20 +14,3 @@ class StateAction():
     def interact_CAPTCHA(self):
         pass
 
-    def click_random_internal_link(self):
-        ret = self._driver.get_internal_links()
-        if len(ret):
-            choice = random.choice(range(len(ret)))
-            link = ret[choice][0]
-            success = self._driver.click(link)
-            return success
-        return None
-
-    def click_random_link(self):
-        ret = self._driver.get_all_links()
-        if len(ret):
-            choice = random.choice(range(len(ret)))
-            link = ret[choice][0]
-            success = self._driver.click(link)
-            return success
-        return None

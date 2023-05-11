@@ -17,7 +17,7 @@ from unidecode import unidecode
 from googletrans import Translator
 import six
 from google.cloud import translate_v2 as translate
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] ="/home/ruofan/git_space/phishing-research/knowledge_base/discoverylabel.json"
+import xdriver.CONFIGS as configs
 
 class StateClass():
     _caller_prefix = "StateClass"
@@ -71,6 +71,7 @@ class StateClass():
     def is_CRP(self):
         ret_password, ret_username = self._driver.get_all_visible_username_password_inputs()
         num_username, num_password = len(ret_username), len(ret_password)
+        print('Number of usernames = {}, Number of passwords = {}'.format(num_username, num_password))
         cre_pred = self.PhishIntention.crp_classifier_reimplement(num_username=num_username,
                                                                   num_password=num_password,
                                                                   screenshot_encoding=self._driver.get_screenshot_encoding())
@@ -128,54 +129,11 @@ class StateClass():
             #     self._driver.switch_to_window(current_window)
             return 1, current_window
 
-    # '''
-    #     Has countdown timer (experimental)
-    # '''
-    # def has_countdown_timer(self):
-    #     all_scripts = self._driver.get_all_scripts()
-    #     for s in all_scripts:
-    #         script, script_dompath, script_src, js_source = s
-    #         if re.search(Regexes.TIME_SCRIPT, js_source, re.IGNORECASE):
-    #             Logger.spit("This page has a countdown timer",
-    #                         debug=True,
-    #                         caller_prefix=StateClass._caller_prefix)
-    #             return True
-    #     return False
-
     '''
         Has recaptcha
     '''
 
     def recaptcha_displayed(self):
-        # iframes = self._driver.get_all_iframes()
-        # for frame in iframes:
-        #     try:
-        #         iframe_src = self._driver.get_attribute(frame, 'src')
-        #     except selenium.common.exceptions.StaleElementReferenceException:
-        #         continue
-        #     except AttributeError:
-        #         continue
-        #     if re.search('captcha|seccode', iframe_src[:self.regex_cut_thre], re.IGNORECASE):
-        #         return True
-        #
-        # imgs = self._driver.get_all_visible_imgs()
-        # for img in imgs:
-        #     try:
-        #         img_src = self._driver.get_attribute(img, 'src')
-        #     except selenium.common.exceptions.StaleElementReferenceException:
-        #         continue
-        #     if re.search('captcha|seccode', img_src[:self.regex_cut_thre], re.IGNORECASE):
-        #         return True
-
-        # scripts = self._driver.get_all_scripts()
-        # for script in scripts:
-        #     _, script_dompath, script_src, js_source = script
-        #     if re.search('captcha|seccode', js_source[:self.regex_cut_thre], re.IGNORECASE):
-        #         return True
-        #     if re.search('captcha|seccode', script_src[:self.regex_cut_thre], re.IGNORECASE):
-        #         return True
-
-        # automatically render
         implicit_recaptcha_elements = self._driver.get_implicit_recaptcha()
         if len(implicit_recaptcha_elements) > 0:
             return True
@@ -187,14 +145,19 @@ class StateClass():
                 return True
         return False
 
-
-
     '''
         Has error message displayed
         Has previous filled values displayed
     '''
     def has_error_message_displayed(self, prev_src, filled_values):
         current_src = self._driver.get_page_text()  # in case javascript is executed
+        if len(current_src) == 0:
+            try:
+                alert_text = self._driver.switch_to.alert.text
+                current_src += alert_text
+                self._driver.switch_to_default()
+            except:
+                pass
         unique_text1, unique_text2 = self.textdiff(prev_src.strip().split('\n'),
                                                    current_src.strip().split('\n'))
         unique_text2.append(self._driver.get_button_text())
@@ -298,5 +261,17 @@ class StateClass():
             return True
         return False
 
+    # '''
+    #     Is loading page
+    # '''
+    # def is_loading(self):
+    #     # check CRP status
+    #     if self.is_CRP(): # a loading page will not be CRP
+    #         return False
+    #     # check screenshot complexity
+    #     screenshot_complexity = self.screenshot_complexity()
+    #     if  screenshot_complexity <= 2:
+    #         return True
+    #     return False
 
 

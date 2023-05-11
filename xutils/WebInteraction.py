@@ -17,7 +17,7 @@ import re
 import cv2
 import io
 import base64
-
+import json
 class WebInteraction():
     _caller_prefix = 'Webinteraction'
     def __init__(self, phishintention_cls, mmocr_model,  button_locator_model, interaction_depth=3, sim_ts=0.83,
@@ -74,9 +74,11 @@ class WebInteraction():
               or "The requested URL was not found on this server" in source
               or "Server at localhost Port" in source
               or "Not Found" in source
-              or "403 Forbidden" in source
+              or "Forbidden" in source
               or "no access to view" in source
               or "Bad request" in source
+              or "Bad Gateway" in source
+              or "Access denied" in source
         ):
             return False
         if source == "<html><head></head><body></body></html>":
@@ -105,7 +107,7 @@ class WebInteraction():
             sorted_link_by_likelihood = links[sorted_index]
             driver.click(sorted_link_by_likelihood[0])
             time.sleep(0.5)
-            # print('After clicking {}'.format(driver.current_url()))
+            Logger.spit('After clicking URL={}'.format(driver.current_url()), debug=True)
             ct += 1
             if ct >= 10:
                 hang = True
@@ -143,15 +145,44 @@ class WebInteraction():
         return False
 
     def get_post_requests_traffic(self, driver):
-        post_strings = [x for x in driver.get_log('performance') if 'POST' in x['message']]
-        messages = ''.join([x['message'] for x in post_strings])
+
+        all_network_requests = [x for x in driver.get_log('performance')]
+        # the indices of post requests
+        post_messages_indices = [it for it in range(len(all_network_requests)) if "'method': 'POST'" in all_network_requests[it]['message']]
+        # the requestId for those post requests
+        try:
+            post_message_request_ids = [json.loads(all_network_requests[it]['message'])['message']['params']['requestId'] for it in
+                                        post_messages_indices]
+        except KeyError:
+            return ''
+
+        post_messages_received = []
+        for it, id in enumerate(post_message_request_ids):
+            # find the POST status code
+            for following_index in range(post_messages_indices[it], len(all_network_requests)):
+                try:
+                    network_request_type = json.loads(all_network_requests[following_index]['message'])['message']['method']
+                    network_request_id = json.loads(all_network_requests[following_index]['message'])['message']['params']['requestId']
+                    network_request_status_code = json.loads(all_network_requests[following_index]['message'])['message']['params']['response']['status']
+                except KeyError:
+                    continue
+                if network_request_type == 'Network.responseReceived':
+                    if network_request_id == id:
+                        if network_request_status_code < 400 and network_request_status_code >= 200: # response is successfully received
+                            this_post_string = all_network_requests[post_messages_indices[it]]['message']
+                            post_messages_received.append(this_post_string)
+                            continue
+
+        messages = ''.join([x for x in post_messages_received])
         postData = ''.join(re.findall('"postData":"([^"]*)"', messages))
         return postData
 
     '''get benign/suspicious classification result from its behaviours'''
-    def get_benign(self, orig_url, driver, obfuscate=False, byimage=True):
+    def get_benign(self, orig_url, driver, obfuscate=False, check_post_traffic=True, check_brand_consistency=False):
         # by default, it is benign
         benign = True
+        redirection_evasion = False
+        no_verification = False
         total_time = 0
         algo_time = 0
 
@@ -182,10 +213,8 @@ class WebInteraction():
                     raise
 
         if obfuscate:
-            if byimage:
-                driver.obfuscate_inputs_byimage()
-            else:
-                driver.obfuscate_inputs()
+            driver.obfuscate_inputs()
+
         start_total_time = time.time()
         start_algo_time = time.time()
         # record original page source
@@ -204,13 +233,14 @@ class WebInteraction():
                 break
 
             # get the original logo features
-            screenshot_encoding = driver.get_screenshot_encoding()
-            returned_logos = self.phishintention_cls.return_all_logos(screenshot_encoding)
-            if returned_logos is not None:  # if the original website has logo but the redirected site doesnt, return False anyway
-                returned_logo = returned_logos[0]
-                orig_logo_feat = self.phishintention_cls.return_logo_feat(returned_logo)
-            else:
-                orig_logo_feat = None
+            if check_brand_consistency:
+                screenshot_encoding = driver.get_screenshot_encoding()
+                returned_logos = self.phishintention_cls.return_all_logos(screenshot_encoding)
+                if returned_logos is not None:  # if the original website has logo but the redirected site doesnt, return False anyway
+                    returned_logo = returned_logos[0]
+                    orig_logo_feat = self.phishintention_cls.return_logo_feat(returned_logo)
+                else:
+                    orig_logo_feat = None
 
             # form filling and form submission
             filled_values = form.fill_all_inputs()
@@ -244,18 +274,24 @@ class WebInteraction():
 
             # redirection to third-party is an indicator of phishing
             if has_redirection:
-                # if orig_logo_feat is not None:
-                #     screenshot_encoding = driver.get_screenshot_encoding()
-                #     returned_logos = self.phishintention_cls.return_all_logos(screenshot_encoding)
-                #     if returned_logos is not None:  # if the original website has logo but the redirected site doesnt, return False anyway
-                #         returned_logo = returned_logos[0]
-                #         redirected_site_logo_feat = self.phishintention_cls.return_logo_feat(returned_logo)
-                #         # logo matched!
-                #         if redirected_site_logo_feat @ orig_logo_feat >= self.sim_ts:
-                #             benign = False
-                #             break
-                benign = False
-                break # some poorly developed benign websites also does random redirection
+                if check_brand_consistency:
+                    if orig_logo_feat is not None:
+                        screenshot_encoding = driver.get_screenshot_encoding()
+                        returned_logos = self.phishintention_cls.return_all_logos(screenshot_encoding)
+                        if returned_logos is not None:  # if the original website has logo but the redirected site doesnt, return False anyway
+                            returned_logo = returned_logos[0]
+                            redirected_site_logo_feat = self.phishintention_cls.return_logo_feat(returned_logo)
+                            # logo matched!
+                            if redirected_site_logo_feat @ orig_logo_feat >= self.sim_ts:
+                                benign = False
+                                break
+                else:
+                    Logger.spit("Redirect to a third-party site {}".format(
+                        tldextract.extract(driver.current_url()).domain), warning=True,
+                        caller_prefix=WebInteraction._caller_prefix)
+                    benign = False
+                    redirection_evasion = True
+                    break # some poorly developed benign websites also does random redirection
 
             # re-initialize form if the webpage changed
             if change_in_webpage:
@@ -297,48 +333,48 @@ class WebInteraction():
                 ct_retry_loop += 1
             # Successful page transition AND data submission:
             else:
-                postData = self.get_post_requests_traffic(driver)
-                # print(postData)
-                if postData and len(postData):
-                    sentCredentials = [val for val in filled_values if (val and
-                                       val in urllib.parse.unquote(postData))]
-                    if len(sentCredentials):
-                        Logger.spit("Credentials {} have been submitted to the server".format(sentCredentials),
-                                    warning=True,
-                                    caller_prefix=WebInteraction._caller_prefix)
-                        benign = False
-                        break
+                if check_post_traffic:
+                    postData = self.get_post_requests_traffic(driver)
+                    # print(postData)
+                    if postData and len(postData):
+                        sentCredentials = [val for val in filled_values if (val and
+                                           val in urllib.parse.unquote(postData))]
+                        if len(sentCredentials):
+                            Logger.spit("Credentials {} have been submitted to the server".format(sentCredentials),
+                                        warning=True,
+                                        caller_prefix=WebInteraction._caller_prefix)
+                            Logger.spit("Suspicious webpage found!", warning=True,
+                                        caller_prefix=WebInteraction._caller_prefix)
+                            benign = False
+                            no_verification = True
+                            break
+                else:
+                    Logger.spit("Credentials have been submitted to the server",
+                                warning=True,
+                                caller_prefix=WebInteraction._caller_prefix)
+                    Logger.spit("Suspicious webpage found!", warning=True,
+                                caller_prefix=WebInteraction._caller_prefix)
+                    benign = False
+                    no_verification = True
+                    break
                 ct_retry_loop += 1
 
-            # still have verifiable input field left
-            # elif len(curr_verifiable_inputs) > 0:
-            #     Logger.spit("Still have verifiable input fields", warning=True,
-            #                 caller_prefix=WebInteraction._caller_prefix)
-            #     ct_retry_loop += 1
-            # else:  # the webpage may turn to an error page because of connection problem, we need to avoid this FP
-            #     is_blank = self.white_screen(driver)
-            #     if not is_blank:
-            #         Logger.spit("Suspicious webpage found!", warning=True,
-            #                     caller_prefix=WebInteraction._caller_prefix)
-            #         benign = False
-            #         break
-            #     else:
-            #         ct_retry_loop += 1
-            is_crp_page = sc.is_CRP()
-            if not is_crp_page:
-                break
             # control interaction length
             if ct_retry_loop >= self.interaction_depth:
+                Logger.spit("Exceed interaction depth, benign", warning=True,
+                            caller_prefix=WebInteraction._caller_prefix)
                 break
 
         algo_time += time.time() - start_algo_time
         total_time += time.time() - start_total_time
-        return benign, algo_time, total_time
+        return benign, algo_time, total_time, redirection_evasion, no_verification
 
     '''this is a stricter version of benign/suspicious classifier, the main goal is to avoid FPs'''
     def get_benign_stricter(self, orig_url, driver):
         # by default, it is benign
         benign = True
+        redirection_evasion = False
+        no_verification = False
         total_time = 0
         algo_time = 0
 
@@ -346,26 +382,28 @@ class WebInteraction():
         Logger.spit('URL={}'.format(orig_url), caller_prefix=WebInteraction._caller_prefix, debug=True)
         try:
             success = driver.get(orig_url, allow_redirections=False)
-            if not success: # if there is a redirection to other domain, we shall not report it
-                return benign, algo_time, total_time
             time.sleep(self.standard_sleeping_time)  # fixme: wait until page is fully loaded
+            if not success: # if there is a redirection to other domain, we shall not report it
+                return benign, algo_time, total_time, redirection_evasion, no_verification
         except Exception as e:
             Logger.spit('Exception when getting the URL {}'.format(e), caller_prefix=WebInteraction._caller_prefix, warning=True)
-            raise
+            return benign, algo_time, total_time, redirection_evasion, no_verification
 
         '''Ignore expired domain page'''
-        title = driver.get_title()
-        domain_tld = tldextract.extract(orig_url).domain + '.' + tldextract.extract(orig_url).suffix
-        if domain_tld in title.lower() or 'domain' in title.lower() or 'blocked' in title.lower():
-            Logger.spit("likely to be an expired page", warning=True, caller_prefix=WebInteraction._caller_prefix)
-            return benign, algo_time, total_time
-        # text = " ".join(driver.get_page_text().split('\n'))
-        # text = " ".join(text.split(" "))
-        # if re.search("domain.*(for sale|auction|expired|available|hosting)|parked free|WordPress|archived",
-        #              text[:1000], re.I):
-        #     Logger.spit("likely to be an expired page", warning=True, caller_prefix=WebInteraction._caller_prefix)
-        #     return benign, algo_time, total_time
-
+        try:
+            title = driver.get_title()
+            domain_tld = tldextract.extract(orig_url).domain + '.' + tldextract.extract(orig_url).suffix
+            if domain_tld in title.lower() or 'domain' in title.lower() or 'blocked' in title.lower():
+                Logger.spit("likely to be an expired page", warning=True, caller_prefix=WebInteraction._caller_prefix)
+                return benign, algo_time, total_time, redirection_evasion, no_verification
+            text = " ".join(driver.get_page_text().split('\n'))
+            text = " ".join(text.split(" "))
+            if re.search("domain.*(for sale|auction|expired|available|hosting)|parked free|WordPress|archived",
+                         text[:1000], re.I):
+                Logger.spit("likely to be an expired page", warning=True, caller_prefix=WebInteraction._caller_prefix)
+                return benign, algo_time, total_time, redirection_evasion, no_verification
+        except:
+            pass
         '''Step 1: redirect to CRP page if staying on a non-CRP'''
         sc = StateClass(driver, self.phishintention_cls)  # determine state
         sa = StateAction(driver, self.phishintention_cls)  # execute certain action
@@ -376,13 +414,13 @@ class WebInteraction():
             if tldextract.extract(current_url).domain != tldextract.extract(orig_url).domain: # if CRP transition redirect to a third party page, come back
                 try:
                     success = driver.get(orig_url, allow_redirections=False)
-                    if not success:
-                        return benign, algo_time, total_time
                     time.sleep(self.standard_sleeping_time)  # fixme: wait until page is fully loaded
+                    if not success:
+                        return benign, algo_time, total_time, redirection_evasion, no_verification
                 except Exception as e:
                     Logger.spit('Exception when getting the URL {}'.format(e), caller_prefix=WebInteraction._caller_prefix,
                                 warning=True)
-                    raise
+                    return benign, algo_time, total_time, redirection_evasion, no_verification
         else:
             Logger.spit("Already a CRP page...", debug=True, caller_prefix=WebInteraction._caller_prefix)
 
@@ -390,7 +428,7 @@ class WebInteraction():
         if not is_crp_page:
             Logger.spit("Cannot find a CRP page, benign...", warning=True,
                         caller_prefix=WebInteraction._caller_prefix)
-            return benign, algo_time, total_time
+            return benign, algo_time, total_time, redirection_evasion, no_verification
 
         start_total_time = time.time()
         start_algo_time = time.time()
@@ -453,9 +491,10 @@ class WebInteraction():
             '''Step 3: make decision'''
             # redirection to third-party sharing the same logo a clear indicator of phishing
             if has_redirection:
+                redirection_evasion = True
                 benign = False
                 Logger.spit("Redirect to a third-party site {}".format(
-                    tldextract.extract(driver.current_url().domain)), warning=True,
+                    tldextract.extract(driver.current_url()).domain), warning=True,
                             caller_prefix=WebInteraction._caller_prefix)
                 Logger.spit("Suspicious webpage found!", warning=True,
                             caller_prefix=WebInteraction._caller_prefix)
@@ -482,7 +521,7 @@ class WebInteraction():
                 same_information = False
 
             # before form submission, has the verifiable input but it is hidden,
-            # dont make decision now, maybe next step the hidden input will appear, e.g microsoft login page
+            # don't make decision now, maybe next step the hidden input will appear, e.g microsoft login page
             # if len(prev_inputs) == 0:
             #     ct_retry_loop += 1
             # when we meet recaptcha, no way to further proceed, eg: yahoo login page redirects to a recaptcha
@@ -490,8 +529,8 @@ class WebInteraction():
                 Logger.spit("Recaptcha is displayed", warning=True,
                             caller_prefix=WebInteraction._caller_prefix)
                 break
-            # No page transtion is defined as:
-            #   Same credentials are required, OR No change in page source, OR Error message is displayed, OR Previous filled values are displayed (# e.g. a 2FA is sent to your email xx@mail.com)
+            # No page transition is defined as:
+            #   Same credentials are required, OR No change in page source, OR Error message is displayed, OR Previous filled values are displayed (# e.g. a 2FA is sent to your email xx@mail.com) OR still have verifiable inputs left
             elif has_error_displayed or \
                     has_filled_values_displayed or \
                     (not change_in_webpage) or \
@@ -505,6 +544,7 @@ class WebInteraction():
                     sentCredentials = [val for val in filled_values if (val and
                                        val in urllib.parse.unquote(postData))]
                     if len(sentCredentials):
+                        no_verification = True
                         Logger.spit("Credentials {} have been submitted to the server".format(sentCredentials),
                                     warning=True,
                                     caller_prefix=WebInteraction._caller_prefix)
@@ -514,21 +554,6 @@ class WebInteraction():
                         break
                 ct_retry_loop += 1
 
-            # still have verifiable input field left
-            # elif len(curr_verifiable_inputs) > 0:
-            #     Logger.spit("Still have verifiable input fields", warning=True,
-            #                 caller_prefix=WebInteraction._caller_prefix)
-            #     ct_retry_loop += 1
-            # else: # the webpage may turn to an error page because of connection problem, we need to avoid this FP
-            #     screenshot_elements = sc.screenshot_elements()
-            #     bincount_screen_elements = np.bincount(screenshot_elements)
-            #     if np.sum(bincount_screen_elements > 0) >= 2:
-            #         Logger.spit("Suspicious webpage found!", warning=True,
-            #                     caller_prefix=WebInteraction._caller_prefix)
-            #         benign = False
-            #         break
-            #     else:
-            #         ct_retry_loop += 1
 
             # control interaction length
             if ct_retry_loop >= self.interaction_depth:
@@ -538,4 +563,4 @@ class WebInteraction():
 
         algo_time += time.time() - start_algo_time
         total_time += time.time() - start_total_time
-        return benign, algo_time, total_time
+        return benign, algo_time, total_time, redirection_evasion, no_verification
