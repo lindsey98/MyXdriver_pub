@@ -34,6 +34,10 @@ if __name__ == "__main__":
     benign, algo_time, total_time, \
     redirection_evasion, no_verification = InteractionModel.get_benign(orig_url=driver.current_url(),
                                                                        driver=driver)
-    print(benign)
+    print('Is it benign?', benign)
+    print('Time spent: ', total_time)
+    if not benign:
+        print('Does it satisfy redirection evasion invariant ? {}'
+              'Does it satisfy no verification invariant? {}'.format(redirection_evasion, no_verification))
 
     driver.quit()
