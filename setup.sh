@@ -203,3 +203,13 @@ check_browsers
 check_mitm
 check_xvfb
 pip3 install --upgrade .
+
+# download xdriver model
+pwd
+file_id="1ouhn17V2ylzKnLIbrP-IpV7Rl7pmHtW-"
+output_file="model_final.pth"
+cd xutils/forms/button_locator_models/
+wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate 'https://docs.google.com/uc?export=download&id='$file_id -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=$file_id" -O "$output_file" && rm -rf /tmp/cookies.txt
+
+
+
