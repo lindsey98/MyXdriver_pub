@@ -1,6 +1,7 @@
 **General**
 -
-In this repository, we build a system to automatically decide the maliciousness of a phishing webpage through its behaviours 
+In this repository, we build a system to automatically decide the maliciousness of a phishing webpage through its behaviours. 
+This repository is built upon https://gitlab.com/kostasdrk/xdriver3-open.
 
 **System Overview**
 -
