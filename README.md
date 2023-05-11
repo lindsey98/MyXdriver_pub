@@ -22,10 +22,10 @@ Install torch, torchvision compatible with your CUDA, see here: https://pytorch.
  pip install git+https://github.com/lindsey98/PhishIntention.git
 ```
 
-4. Clone this MyXDriver repo and `cd` into it
+4. Clone this MyXDriver_pub repo and `cd` into it
  ```
 git clone https://github.com/lindsey98/MyXdriver_pub.git
-cd MyXdriver
+cd MyXdriver_pub
 ```
 
 5. run `$ ./setup.sh`
