@@ -17,10 +17,10 @@ setup(
   version = '0.1', # version number
   license= None, # License e.g. 'MIT', "GPL2.0"
   description = '',   # Package descriptin
-  author = 'Kostas Drakonakis',
-  author_email = 'kostasdrk@ics.forth.gr',
-  url = '', # Github URL, e.g. https://github.com/user/reponame
-  download_url = 'https://gitlab.com/kostasdrk/xdriver3-open/', # Github download url, e.g. https://github.com/user/reponame/archive/v_01.tar.gz
+  author = 'Ruofan Liu, Kostas Drakonakis',
+  author_email = 'liu.ruofan16@u.nus.edu',
+  url = 'https://github.com/lindsey98/MyXdriver_pub', # Github URL, e.g. https://github.com/user/reponame
+  download_url = 'https://github.com/lindsey98/MyXdriver_pub',
   keywords = ['selenium', 'browser', 'automation', 'security'],
   install_requires = [ # Dependencies
 		  "tldextract",
