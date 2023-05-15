@@ -3,7 +3,12 @@
 In this repository, we build a system to automatically decide the maliciousness of a phishing webpage through its behaviours. 
 This repository is built upon https://gitlab.com/kostasdrk/xdriver3-open.
 
+This repository includes partial code for our paper "Knowledge Expansion and Counterfactual Interaction for Reference-Based Phishing Detection".
+Published in USENIX Security 2023. The main repository is here: https://github.com/code-philia/Dynaphish 
+
 **System Overview**
+We build an interaction webdriver (Selenium-based) to automatically perform form filling, form submission, and webpage transition detection.
+Our main goal is to report suspicious behaviours in web login process, such as (1) no verification on fake account details and (2) evasive redirection to third-party website upon form submission. 
 -
 <img src='WebInteraction Diagram-2.png' style="width:3000px;height:650px"/>
 
