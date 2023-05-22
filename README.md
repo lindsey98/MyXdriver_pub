@@ -10,7 +10,6 @@ Published in USENIX Security 2023. The main repository is here: https://github.c
 -
 We build an interaction webdriver (Selenium-based) to automatically perform form filling, form submission, and webpage transition detection.
 Our main goal is to report suspicious behaviours in web login process, such as (1) no verification on fake account details and (2) evasive redirection to third-party website upon form submission. 
--
 <img src='WebInteraction Diagram-2.png' style="width:3000px;height:650px"/>
 
 
