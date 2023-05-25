@@ -206,6 +206,11 @@ pip3 install --upgrade .
 pip install urllib3
 pip install requests==2.28.1
 pip install unidecode
+# ImportError: cannot import name 'SSLv3_METHOD' from 'OpenSSL.SSL'
+pip3 install pyopenssl==22.0.0
+
+# AttributeError: module 'lib' has no attribute 'OpenSSL_add_all_algorithms'
+pip3 install cryptography==38.0.4
 
 # download xdriver model
 pwd
