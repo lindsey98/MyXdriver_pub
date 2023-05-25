@@ -203,6 +203,7 @@ check_browsers
 check_mitm
 check_xvfb
 pip3 install --upgrade .
+pip install urllib3
 
 # download xdriver model
 pwd
