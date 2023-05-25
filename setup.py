@@ -33,7 +33,7 @@ setup(
 		  "mime",
 		  "beautifulsoup4==4.9.3",
 	  	  "pyautogui",
-	  	  "urllib3"
+	  	  "charset-normalizer"
 	  ],
   dependency_links = [ # Dependencies not in PyPI
   ],
