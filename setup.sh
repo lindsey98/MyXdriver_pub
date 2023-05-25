@@ -204,6 +204,8 @@ check_mitm
 check_xvfb
 pip3 install --upgrade .
 pip install urllib3
+pip install requests==2.28.1
+pip install unidecode
 
 # download xdriver model
 pwd
