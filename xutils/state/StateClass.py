@@ -17,7 +17,6 @@ from unidecode import unidecode
 from googletrans import Translator
 import six
 from google.cloud import translate_v2 as translate
-import xdriver.CONFIGS as configs
 
 class StateClass():
     _caller_prefix = "StateClass"
