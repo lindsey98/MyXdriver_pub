@@ -32,7 +32,8 @@ setup(
 		  "selenium",
 		  "mime",
 		  "beautifulsoup4==4.9.3",
-	  	  "pyautogui"
+	  	  "pyautogui",
+	  	  "urllib3"
 	  ],
   dependency_links = [ # Dependencies not in PyPI
   ],
