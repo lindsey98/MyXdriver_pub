@@ -229,7 +229,7 @@ esac
 conda install -c conda-forge openpyxl -y
 ## Install mmengine, mmcv
 pip install mmengine
-pip install "mmcv>=2.0.0" -f "https://download.openmmlab.com/mmcv/dist/cu${cuda_version//.}/torch$(python -c "import torch; print(torch.__version__[:5])")/index.html"
+pip install "mmcv==1.5.0" -f "https://download.openmmlab.com/mmcv/dist/cu${cuda_version//.}/torch$(python -c "import torch; print(torch.__version__[:5])")/index.html"
 
 ## Install MMdet
 cd ../
