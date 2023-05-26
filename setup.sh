@@ -225,22 +225,27 @@ case $cuda_version in
       ;;
 esac
 
-## Install MMOCR dependencies
-conda install -c conda-forge openpyxl -y
-## Install mmengine, mmcv
-pip install mmengine
-pip install mmcv-full==1.5.0 -f "https://download.openmmlab.com/mmcv/dist/cu${cuda_version//.}/torch$(python -c "import torch; print(torch.__version__[:5])")/index.html"
+## MMOCR
+export TORCH_CUDA_ARCH_LIST="6.0 6.1 7.0+PTX"
+export  TORCH_NVCC_FLAGS="-Xfatbin -compress-all"
+export  CMAKE_PREFIX_PATH="$(dirname $(which conda))/../"
 
-## Install MMdet
-cd ../
-git clone https://github.com/open-mmlab/mmdetection.git
-cd mmdetection
-pip install -v -e .
-## Install mmocr
-cd ../
-git clone https://github.com/open-mmlab/mmocr.git
-cd mmocr
-pip install -v -e .
+pip uninstall -y mmdet mmcv
+conda install -y cython==0.28.5
+#pip install mmcv==0.2.15
+pip install mmcv==0.6.2 terminaltables Pillow==6.2.2
+
+export FORCE_CUDA="1"
+
+pip install "git+https://github.com/open-mmlab/cocoapi.git#subdirectory=pycocotools"
+pip install "git+https://github.com/cocodataset/cocoapi.git#subdirectory=PythonAPI"
+#git clone https://github.com/open-mmlab/mmdetection.git mmdetection
+#cd mmdetection
+rm -rf build
+pip install -r requirements/build.txt
+python setup.py develop
+pip install --no-cache-dir -e .
+pip install mmcv==0.6.2 mmcv-full
 
 # download xdriver model
 pwd
