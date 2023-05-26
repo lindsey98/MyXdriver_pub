@@ -2,15 +2,15 @@ import time
 from xdriver.xutils.PhishIntentionWrapper import PhishIntentionWrapper
 from xdriver.xutils.WebInteraction import WebInteraction
 from xdriver.xutils.Logger import Logger
-from mmocr.utils.ocr import MMOCR
+from mmocr.apis import MMOCRInferencer
 from xdriver.xutils.forms.SubmissionButtonLocator import SubmissionButtonLocator
 from xdriver.XDriver import XDriver
 
 if __name__ == "__main__":
     sleep_time = 5; timeout_time = 30
     phishintention_cls = PhishIntentionWrapper()
-    mmocr_model = MMOCR(det=None,
-                        recog='ABINet',
+    mmocr_model = MMOCRInferencer(det=None,
+                        rec='ABINet',
                         device='cuda',
                         config_dir='/home/ruofan/git_space/phishing-research/web_interaction/xdriver3-open/configs/')
     button_locator_model = SubmissionButtonLocator(
