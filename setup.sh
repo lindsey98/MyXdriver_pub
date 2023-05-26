@@ -214,21 +214,31 @@ pip3 install pyopenssl==22.0.0
 pip3 install cryptography==38.0.4
 
 # Install torch
+mkl_path=$(conda info --base)/envs/"$ENV_NAME"/lib
+echo "MKL path is $mkl_path"
+# Export the LD_LIBRARY_PATH environment variable
+export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$mkl_path"
+
+# Get the CUDA and cuDNN versions, install pytorch, torchvision
+conda install typing_extensions
 cuda_version=$(nvcc --version | grep release | awk '{print $6}' | cut -c2- | awk -F. '{print $1"."$2}')
 pip install torch==1.9.0 torchvision -f "https://download.pytorch.org/whl/cu${cuda_version//.}/torch_stable.html"
 
 # Install Detectron2
-cuda_version=$(nvcc --version | grep release | awk '{print $6}' | cut -c2- | awk -F. '{print $1$2}')
-case $cuda_version in
-    "111" | "102" | "101")
-      python -m pip install detectron2 -f \
-  https://dl.fbaipublicfiles.com/detectron2/wheels/cu"$cuda_version"/torch1.9/index.html
-    ;;
-    *)
-      echo "Please build Detectron2 from source https://detectron2.readthedocs.io/en/latest/tutorials/install.html">&2
-      exit 1
-      ;;
-esac
+git clone https://github.com/facebookresearch/detectron2.git
+python -m pip install -e detectron2
+
+# cuda_version=$(nvcc --version | grep release | awk '{print $6}' | cut -c2- | awk -F. '{print $1$2}')
+# case $cuda_version in
+#     "111" | "102" | "101")
+#       python -m pip install detectron2 -f \
+#   https://dl.fbaipublicfiles.com/detectron2/wheels/cu"$cuda_version"/torch1.9/index.html
+#     ;;
+#     *)
+#       echo "Please build Detectron2 from source https://detectron2.readthedocs.io/en/latest/tutorials/install.html">&2
+#       exit 1
+#       ;;
+# esac
 
 ## MMOCR
 pip install -U openmim
