@@ -218,18 +218,17 @@ cuda_version=$(nvcc --version | grep release | awk '{print $6}' | cut -c2- | awk
 pip install torch==1.9.0 torchvision -f "https://download.pytorch.org/whl/cu${cuda_version//.}/torch_stable.html"
 
 # Install Detectron2
-python -m pip install 'git+https://github.com/facebookresearch/detectron2.git' --user
-# cuda_version=$(nvcc --version | grep release | awk '{print $6}' | cut -c2- | awk -F. '{print $1$2}')
-# case $cuda_version in
-#     "111" | "102" | "101")
-#       python -m pip install detectron2 -f \
-#   https://dl.fbaipublicfiles.com/detectron2/wheels/cu"$cuda_version"/torch1.9/index.html
-#     ;;
-#     *)
-#       echo "Please build Detectron2 from source https://detectron2.readthedocs.io/en/latest/tutorials/install.html">&2
-#       exit 1
-#       ;;
-# esac
+cuda_version=$(nvcc --version | grep release | awk '{print $6}' | cut -c2- | awk -F. '{print $1$2}')
+case $cuda_version in
+    "111" | "102" | "101")
+      python -m pip install detectron2 -f \
+  https://dl.fbaipublicfiles.com/detectron2/wheels/cu"$cuda_version"/torch1.9/index.html
+    ;;
+    *)
+      echo "Please build Detectron2 from source https://detectron2.readthedocs.io/en/latest/tutorials/install.html">&2
+      exit 1
+      ;;
+esac
 
 ## MMOCR
 pip install -U openmim
