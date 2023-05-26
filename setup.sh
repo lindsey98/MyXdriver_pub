@@ -203,6 +203,7 @@ check_browsers
 check_mitm
 check_xvfb
 pip3 install --upgrade .
+
 pip install urllib3
 pip install requests==2.28.1
 pip install unidecode
@@ -232,19 +233,10 @@ export  CMAKE_PREFIX_PATH="$(dirname $(which conda))/../"
 
 pip uninstall -y mmdet mmcv
 conda install -y cython==0.28.5
-#pip install mmcv==0.2.15
 pip install mmcv==0.6.2 terminaltables Pillow==6.2.2
 
 export FORCE_CUDA="1"
 
-pip install "git+https://github.com/open-mmlab/cocoapi.git#subdirectory=pycocotools"
-pip install "git+https://github.com/cocodataset/cocoapi.git#subdirectory=PythonAPI"
-#git clone https://github.com/open-mmlab/mmdetection.git mmdetection
-#cd mmdetection
-rm -rf build
-pip install -r requirements/build.txt
-python setup.py develop
-pip install --no-cache-dir -e .
 pip install mmcv==0.6.2 mmcv-full
 
 # download xdriver model
