@@ -230,8 +230,8 @@ esac
 pip uninstall -y mmdet mmcv
 conda install -y cython==0.28.5
 pip install terminaltables Pillow==6.2.2
-pip install mmcv==1.5.0 mmcv-full
-pip install mmdet==2.23.0
+pip install mmcv==0.6.2 mmcv-full
+pip install mmdet==2.2.1
 pip install mmocr==0.5.0
 
 # download xdriver model
