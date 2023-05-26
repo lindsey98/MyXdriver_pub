@@ -33,7 +33,7 @@ git clone https://github.com/lindsey98/MyXdriver_pub.git
 cd MyXdriver_pub
 ```
 
-5. run `$ ./setup.sh`
+5. run `./setup.sh`
 * Make sure the webdrivers' versions are compatible with the corresponding browsers' version
 
-6. Install mmocr: See https://github.com/open-mmlab/mmocr, https://mmocr.readthedocs.io/en/dev-1.x/get_started/install.html 
+6. Install mmocr: See https://mmcv.readthedocs.io/en/latest/get_started/installation.html
