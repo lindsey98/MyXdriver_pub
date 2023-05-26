@@ -243,8 +243,8 @@ python -m pip install -e detectron2
 ## MMOCR
 pip install -U openmim
 mim install mmengine
-mim install mmcv
 mim install mmdet
+mim install mmcv
 git clone https://github.com/open-mmlab/mmocr.git
 cd mmocr
 pip install -v -e .
