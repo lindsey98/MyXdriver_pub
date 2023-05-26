@@ -213,6 +213,10 @@ pip3 install pyopenssl==22.0.0
 # AttributeError: module 'lib' has no attribute 'OpenSSL_add_all_algorithms'
 pip3 install cryptography==38.0.4
 
+# Install torch
+cuda_version=$(nvcc --version | grep release | awk '{print $6}' | cut -c2- | awk -F. '{print $1"."$2}')
+pip install torch==1.8.1 torchvision -f "https://download.pytorch.org/whl/cu${cuda_version//.}/torch_stable.html"
+
 # Install Detectron2
 cuda_version=$(nvcc --version | grep release | awk '{print $6}' | cut -c2- | awk -F. '{print $1$2}')
 case $cuda_version in
