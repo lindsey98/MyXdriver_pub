@@ -227,12 +227,13 @@ case $cuda_version in
 esac
 
 ## MMOCR
-pip uninstall -y mmdet mmcv
-conda install -y cython==0.28.5
-pip install terminaltables Pillow
-pip install mmcv==0.6.2 mmcv-full
-pip install mmdet==2.2.1
-pip install mmocr==0.5.0
+pip install -U openmim
+mim install mmengine
+mim install mmcv
+mim install mmdet
+git clone https://github.com/open-mmlab/mmocr.git
+cd mmocr
+pip install -v -e .
 
 # download xdriver model
 pwd
