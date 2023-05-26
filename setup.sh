@@ -223,7 +223,7 @@ python -m pip install 'git+https://github.com/facebookresearch/detectron2.git' -
 # case $cuda_version in
 #     "111" | "102" | "101")
 #       python -m pip install detectron2 -f \
-#   https://dl.fbaipublicfiles.com/detectron2/wheels/cu"$cuda_version"/torch1.8/index.html
+#   https://dl.fbaipublicfiles.com/detectron2/wheels/cu"$cuda_version"/torch1.9/index.html
 #     ;;
 #     *)
 #       echo "Please build Detectron2 from source https://detectron2.readthedocs.io/en/latest/tutorials/install.html">&2
