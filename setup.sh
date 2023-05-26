@@ -227,16 +227,9 @@ case $cuda_version in
 esac
 
 ## MMOCR
-export TORCH_CUDA_ARCH_LIST="6.0 6.1 7.0+PTX"
-export  TORCH_NVCC_FLAGS="-Xfatbin -compress-all"
-export  CMAKE_PREFIX_PATH="$(dirname $(which conda))/../"
-
 pip uninstall -y mmdet mmcv
 conda install -y cython==0.28.5
-pip install mmcv==0.6.2 terminaltables Pillow==6.2.2
-
-export FORCE_CUDA="1"
-
+pip install terminaltables Pillow==6.2.2
 pip install mmcv==0.6.2 mmcv-full
 pip install mmdet==2.2.1
 
