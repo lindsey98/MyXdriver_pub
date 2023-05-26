@@ -238,6 +238,7 @@ pip install mmcv==0.6.2 terminaltables Pillow==6.2.2
 export FORCE_CUDA="1"
 
 pip install mmcv==0.6.2 mmcv-full
+pip install mmdet==2.2.1
 
 # download xdriver model
 pwd
