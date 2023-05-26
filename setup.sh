@@ -212,6 +212,36 @@ pip3 install pyopenssl==22.0.0
 # AttributeError: module 'lib' has no attribute 'OpenSSL_add_all_algorithms'
 pip3 install cryptography==38.0.4
 
+# Install Detectron2
+cuda_version=$(nvcc --version | grep release | awk '{print $6}' | cut -c2- | awk -F. '{print $1$2}')
+case $cuda_version in
+    "111" | "102" | "101")
+      python -m pip install detectron2 -f \
+  https://dl.fbaipublicfiles.com/detectron2/wheels/cu"$cuda_version"/torch1.8/index.html
+    ;;
+    *)
+      echo "Please build Detectron2 from source https://detectron2.readthedocs.io/en/latest/tutorials/install.html">&2
+      exit 1
+      ;;
+esac
+
+## Install MMOCR dependencies
+conda install -c conda-forge openpyxl -y
+## Install mmengine, mmcv
+pip install mmengine
+pip install "mmcv>=2.0.0" -f "https://download.openmmlab.com/mmcv/dist/cu${cuda_version//.}/torch$(python -c "import torch; print(torch.__version__[:5])")/index.html"
+
+## Install MMdet
+cd ../
+git clone https://github.com/open-mmlab/mmdetection.git
+cd mmdetection
+pip install -v -e .
+## Install mmocr
+cd ../
+git clone https://github.com/open-mmlab/mmocr.git
+cd mmocr
+pip install -v -e .
+
 # download xdriver model
 pwd
 file_id="1ouhn17V2ylzKnLIbrP-IpV7Rl7pmHtW-"
