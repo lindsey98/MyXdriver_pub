@@ -221,6 +221,15 @@ else
    conda create -n "$ENV_NAME" python=3.8
    conda activate "$ENV_NAME"
 fi
+
+# download xdriver model
+pwd
+file_id="1ouhn17V2ylzKnLIbrP-IpV7Rl7pmHtW-"
+output_file="model_final.pth"
+cd xutils/forms/button_locator_models/
+wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate 'https://docs.google.com/uc?export=download&id='$file_id -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=$file_id" -O "$output_file" && rm -rf /tmp/cookies.txt
+
+
 # install phishintention
 #PACKAGE_NAME="phishintention"
 ## Fetch list of installed packages
@@ -245,8 +254,9 @@ pip install selenium==4.0.0
 
 ## Google cloud
 pip install --upgrade --user google-api-python-client
+pip install --upgrade --user google-cloud
 pip install google-cloud-vision
-
+pip install google-cloud-translate
 ## Install MMOCR
 pip install mmengine
 pip install mmcv==2.0.0rc4 -f https://download.openmmlab.com/mmcv/dist/cu111/torch1.9/index.html
@@ -255,14 +265,4 @@ git clone https://github.com/open-mmlab/mmocr.git
 cd mmocr
 pip install -v -e .
 cd ../
-rm -rf mmocr
-
-# download xdriver model
-pwd
-file_id="1ouhn17V2ylzKnLIbrP-IpV7Rl7pmHtW-"
-output_file="model_final.pth"
-cd xutils/forms/button_locator_models/
-wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate 'https://docs.google.com/uc?export=download&id='$file_id -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=$file_id" -O "$output_file" && rm -rf /tmp/cookies.txt
-
-
 

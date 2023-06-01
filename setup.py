@@ -7,14 +7,15 @@ setup(
 			  'xdriver.browsers.config.webdrivers', 'xdriver.browsers.config.extensions',
 			  'xdriver.js',
 			  'xdriver.security',
-			  'xdriver.xutils', 'xdriver.xutils.forms', 'xdriver.xutils.state', 'xdriver.xutils.action',
+			  'xdriver.xutils', 'xdriver.xutils.forms', 'xdriver.xutils.state',
+              'xdriver.xutils.action',
 			  'xdriver.xutils.proxy', 'xdriver.xutils.proxy.mitm',
 			  'xdriver.testing'],   # package name
   package_dir = {
 	'xdriver' : '.',
   },
   package_data = {'' : ["*.js", "*.json", "*.sh", "chromedriver", "geckodriver",
-						"operadriver", "mitmdump", "*.txt"]},
+						"operadriver", "mitmdump", "*.txt", "*.py"]},
   version = '0.1', # version number
   description = '',   # Package descriptin
   author = 'Ruofan Liu, Kostas Drakonakis',
