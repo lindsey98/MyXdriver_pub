@@ -1,7 +1,13 @@
 #!/usr/bin/python
+import logging
+from selenium.webdriver.remote.remote_connection import LOGGER
 
+LOGGER.setLevel(logging.WARNING)
+import selenium.common.exceptions
 from selenium.webdriver.remote.webdriver import WebDriver
-from selenium.webdriver import Chrome, Firefox
+# from selenium.webdriver import Chrome, Firefox
+from selenium.webdriver import Firefox
+from seleniumwire.webdriver import Chrome
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.remote.command import Command
 from selenium.common.exceptions import *
@@ -11,7 +17,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.action_chains import ActionChains
 from webdriver_manager.chrome import ChromeDriverManager
-
+from selenium_stealth import stealth
 from xdriver.xutils.URLUtils import URLUtils
 from xdriver.xutils.Logger import Logger
 from xdriver.xutils.Regexes import Regexes
@@ -20,6 +26,7 @@ from xdriver.xutils.proxy.ProxyWrapper import ProxyWrapper
 from xdriver.security.SecurityAuditor import SecurityAuditor
 from xdriver.xutils.TextMatching import *
 from xdriver.xutils.forms import Form
+from xdriver.xutils.forms import FormOriginal
 
 from time import time, sleep
 from pyvirtualdisplay import Display
@@ -37,6 +44,10 @@ from PIL import Image
 import io
 import base64
 import numpy as np
+import json
+import os
+import tempfile
+from functools import reduce
 
 CHROME = "chrome"
 OPERA = "opera"
@@ -60,7 +71,7 @@ class XDriver(Chrome, Firefox):
 
     ''' A regex of blacklisted suffixes that we might not want to consider, e.g. during a crawl
     '''
-    _forbidden_suffixes = r"\.(mp3|wav|wma|ogg|mkv|zip|tar|xz|rar|z|deb|bin|iso|csv|tsv|dat|txt|css|log|sql|xml|sql|mdb|apk|bat|bin|exe|jar|wsf|fnt|fon|otf|ttf|ai|bmp|gif|ico|jp(e)?g|png|ps|psd|svg|tif|tiff|cer|rss|key|odp|pps|ppt|pptx|c|class|cpp|cs|h|java|sh|swift|vb|odf|xlr|xls|xlsx|bak|cab|cfg|cpl|cur|dll|dmp|drv|icns|ini|lnk|msi|sys|tmp|3g2|3gp|avi|flv|h264|m4v|mov|mp4|mp(e)?g|rm|swf|vob|wmv|doc(x)?|odt|pdf|rtf|tex|txt|wks|wps|wpd)$"
+    _forbidden_suffixes = r"\.(mp3|wav|wma|ogg|mkv|zip|tar|xz|rar|z|deb|bin|iso|csv|tsv|dat|txt|css|log|sql|xml|sql|mdb|apk|bat|bin|exe|jar|wsf|fnt|fon|otf|ttf|ai|bmp|gif|ico|jp(e)?g|png|ps|psd|svg|tif|tiff|cer|rss|key|odp|pps|ppt|pptx|c|class|cpp|cs|h|java|sh|swift|vb|odf|xlr|xls|xlsx|bak|cab|cfg|cpl|cur|dll|dmp|drv|icns|ini|lnk|msi|sys|tmp|3g2|3gp|avi|flv|h264|m4v|mov|mp4|mp(e)?g|rm|swf|vob|wmv|doc(x)?|odt|rtf|tex|txt|wks|wps|wpd)$"
 
     ''' Configuration options for XDriver. Should always be set before booting the browser.
         For anything that is `enabled : True` and no other specific changes are made, XDriver's defaults will be used '''
@@ -75,7 +86,7 @@ class XDriver(Chrome, Firefox):
             "no_default_browser_check": True,  # Prevent popup to make browser the default (if this is a fresh instance)
             "disable_cache": True,  # Disable all possible levels of cache
             "profile": None,  # Use specific profile. If None, a temporary new one will be generated
-            "headless": False,  # Start headless
+            "headless": True,  # Start headless
             "virtual": False,  # Use vrtual display
             "vpn": False,  # Opera built-in VPN -- Not currently supported
             "no_blink_feature": True
@@ -108,7 +119,7 @@ class XDriver(Chrome, Firefox):
         },
         "xdriver": {  # High-level XDriver/Selenium specific options
             "max_retries": 3,  # How many times to retry an operation by default, before giving up
-            "timeout": 120,  # Page load timeout in seconds
+            "timeout": 10,  # Page load timeout in seconds
             "heartbeat_url": "http://google.com",
             # Used when booting the browser for a dummy request, to make sure everything works. Choose something that is generally responsive.
             "max_boot_retries": 3,
@@ -282,12 +293,9 @@ class XDriver(Chrome, Firefox):
                 driver = constructor(refs=kwargs.pop("refs", {}), redirects=kwargs.pop("redirects", {}),
                                      retries=kwargs.pop("retries", {}))
                 driver._config = deepcopy(XDriver._base_config)  # Keep used config for reboots and crash recoveries
-            # if not driver.heartbeat():
-            # 	Logger.spit("Driver (or its proxy) is not working properly", warning = True, caller_prefix = XDriver._caller_prefix)
-            # 	driver.quit() # Clean exit
-            # 	raise XDriverException("Driver (or its proxy) is not working properly", caller_prefix = XDriver._caller_prefix)
             except Exception as e:
                 Logger.spit("Error while starting XDriver.", error=True, caller_prefix=XDriver._caller_prefix)
+                print(e)
                 raise
                 boot_retries += 1
                 if boot_retries < XDriver._base_config["xdriver"]["max_boot_retries"]:
@@ -303,6 +311,14 @@ class XDriver(Chrome, Firefox):
                 driver.enable_vpn()
 
             XDriver._browser_instance_type = None  # Reset
+            stealth(driver,
+                    languages=["en-US", "en"],
+                    vendor="Google Inc.",
+                    platform="Linux",
+                    webgl_vendor="Intel Inc.",
+                    renderer="Intel Iris OpenGL Engine",
+                    fix_hairline=True
+                    )
             return driver
 
     def __init__(self, *args, **kwargs):
@@ -335,9 +351,11 @@ class XDriver(Chrome, Firefox):
         from xdriver.browsers.OXDriver import OXDriver
 
         if isinstance(self, CXDriver) or isinstance(self, OXDriver):  # Chrome, Opera
-
-            Chrome.__init__(self, ChromeDriverManager().install(),
-                            chrome_options=kwargs.get("chrome_options"))
+            Chrome.__init__(self,
+                            # ChromeDriverManager().install(), # install latest version
+                            executable_path=kwargs.get("executable_path"),
+                            chrome_options=kwargs.get("chrome_options"),
+                            desired_capabilities=kwargs.get("desired_capabilities"))
 
         elif isinstance(self, FXDriver):  # Firefox
             Firefox.__init__(self, executable_path=kwargs.get("executable_path"),
@@ -486,11 +504,14 @@ class XDriver(Chrome, Firefox):
             # scr_filename = "/tmp/scr_%s.png" % str(uuid4())
             # self.save_screenshot(scr_filename) # So,
             # os.remove(scr_filename) # remove screenshot file if booted
-            self.set_page_load_timeout(5)
             super(XDriver, self).get(XDriver._base_config["xdriver"][
                                          "heartbeat_url"])  # Do not `_invoke` it, we want to see the exception if raised
             self.set_page_load_timeout(
                 XDriver._base_config["xdriver"]["timeout"])  # restore page load timeout after successful heartbeat
+            self.set_script_timeout(
+                XDriver._base_config["xdriver"]["timeout"])
+            self.implicitly_wait(
+                XDriver._base_config["xdriver"]["timeout"])
             return True
         except TimeoutException as e:
             return False
@@ -500,6 +521,7 @@ class XDriver(Chrome, Firefox):
         original_kwargs = dict(kwargs)  # In case we re-_invoke it, we need the original kwargs
         ex = None
         ret_val = None
+
         try:
             if kwargs.pop("retry", True):  # By default, retry all methods if possible, otherwise explicitly requested
                 self.enter_retry(method, max_retries=kwargs.pop("max_retries", self._config["xdriver"]["max_retries"]))
@@ -509,11 +531,6 @@ class XDriver(Chrome, Firefox):
                                self).get: ret_val = True  # Need to explicitly set the ret value for WebDriver's get
             self.exit_retry(method)  # The operation completed, no need to keep the retry counter
             return ret_val
-        except JavascriptException as ex:
-            Logger.spit("selenium.common.exceptions.JavascriptException:".format(ex), debug=True,
-                        caller_prefix=self._caller_prefix)
-            raise
-            return
         except UnexpectedAlertPresentException as ex:
             self._invoke_exception_handler(self._UnexpectedAlertPresentException_handler)
             if method == super(XDriver, self).get:  # Nothing more to do for a `get`
@@ -539,9 +556,7 @@ class XDriver(Chrome, Firefox):
                 InvalidCookieDomainException, UnableToSetCookieException, ImeNotAvailableException,
                 ImeActivationFailedException) as ex:
             str_ex = stringify_exception(ex)
-            if 'unhandled inspector error: {"code":-32000,"message":"Unable to capture screenshot"}' in str_ex:
-                ret_val = False
-            elif ex is TimeoutException or any([crash in str_ex for crash in self._recoverable_crashes]):
+            if ex is TimeoutException or any([crash in str_ex for crash in self._recoverable_crashes]):
                 # Reboot browser, maintain state and retry the operation
                 if not self._invoke_exception_handler(self._TimeoutException_handler):
                     raise
@@ -554,6 +569,7 @@ class XDriver(Chrome, Firefox):
                     self.setup_page_scripts()
                 else:
                     raise
+
         retries, max_retries = self._RETRIES.get(method, [None, None])
         # If we are not in retry mode OR if the retries have exceeded the threshold, either return a default value (if set) or raise the exception to the caller
         if method not in self._RETRIES or retries >= max_retries:
@@ -564,7 +580,8 @@ class XDriver(Chrome, Firefox):
 
         # About to re-invoke method. Increment retry counter
         self._RETRIES[method][0] += 1
-        Logger.spit("Retrying for the {}th time...".format(self._RETRIES[method][0]), debug=True, caller_prefix=XDriver._caller_prefix)
+        Logger.spit("Retrying for the {}th time...".format(self._RETRIES[method][0]), debug=True,
+                    caller_prefix=XDriver._caller_prefix)
         # Logger.spit("Retrying for: %s || Because: %s" % (method, stringify_exception(ex, strip = True)), debug = True, caller_prefix = self._caller_prefix)
         return self._invoke(method, *args, **original_kwargs)
 
@@ -634,7 +651,7 @@ class XDriver(Chrome, Firefox):
         self._config["browser"]["profile"] = profile
         self.reboot(clear_refs=False, delete_profile=delete_profile,
                     delete_proxy_config=False)  # Don't clear `_REFS`, but delete old profile if instructed; keep proxy config
-        self.get(self._last_url)  # Maybe this is not necessary
+        self.get(self._last_url)  # Mobfuscate_inputaybe this is not necessary
 
     ''' Graceful exit browser and reboot with appropriate settings (i.e. same proxy port, virtual display, same or different profile)
     '''
@@ -644,16 +661,15 @@ class XDriver(Chrome, Firefox):
         self.quit(clear_refs=clear_refs, delete_profile=delete_profile,
                   delete_proxy_config=delete_proxy_config)  # graceful exit (if possible)
 
-        from browsers.CXDriver import CXDriver
-        from browsers.FXDriver import FXDriver
-        from browsers.OXDriver import OXDriver
+        from xdriver.browsers.CXDriver import CXDriver
+        from xdriver.browsers.FXDriver import FXDriver
+        from xdriver.browsers.OXDriver import OXDriver
 
         XDriver._base_config = self._config  # Setup the base config to be used by the boot procedure
         new_instance = XDriver.boot(chrome=self._browser_type == CHROME, opera=self._browser_type == OPERA,
                                     firefox=self._browser_type == FIREFOX, refs={} if clear_refs else self._REFS,
                                     redirects={} if clear_refs else self._REDIRECTS,
                                     retries={} if clear_refs else self._RETRIES)
-
         if not new_instance:
             raise XDriverException("Could not reboot browser.", caller_prefix=self._caller_prefix)
 
@@ -679,37 +695,36 @@ class XDriver(Chrome, Firefox):
         self.store_reference_element(url)
         self.store_reference_element(
             self.current_url())  # also landing URL in case it differs from the passed URL; quite common
-        if accept_cookie:
-            self._invoke(self.accept_cookies)
-        if click_popup:
-            self._invoke(self.click_popup)
+
+        # if accept_cookie:
+        #     self._invoke(self.accept_cookies)
+        # if click_popup:
+        #     self._invoke(self.click_popup)
         return True
+
+    '''Accept cookies'''
 
     def accept_cookies(self):
         element = self.get_clickable_elements_contains("accept")
         if element:
-            ct = 0
-            while True:
+            for ct in range(len(element)):
                 successfully_click = self.click(element[ct])
-                if successfully_click or ct == len(element) - 1:
-                    break
-                ct += 1
-        return True
+                if successfully_click:
+                    return True
+        return False
+
+    '''Click popup window'''
 
     def click_popup(self):
         keyword_list = ["close", "ok", "agree", "I understand", "I accept"]
         for keyword in keyword_list:
             element = self.get_clickable_elements_contains(keyword)
             if element:
-                ct = 0
-                while True:
+                for ct in range(len(element)):
                     successfully_click = self.click(element[ct])
                     if successfully_click:
                         return True
-                    if ct == len(element) - 1:
-                        break
-                    ct += 1
-        return True
+        return False
 
     def set_last_url(self, url):  # Set the last known URL (i.e. to a location that we didn't explicitly `get`)
         self._last_url = url
@@ -724,7 +739,10 @@ class XDriver(Chrome, Firefox):
         return super(XDriver, self).page_source
 
     def rendered_source(self):
-        return self._invoke(self.execute_script, "return document.getElementsByTagName('html')[0].innerHTML")
+        try:
+            return self._invoke(self.execute_script, "return document.getElementsByTagName('html')[0].innerHTML;")
+        except selenium.common.exceptions.JavascriptException:
+            return self.page_source()
 
     '''get page text through normal HTML'''
 
@@ -735,7 +753,22 @@ class XDriver(Chrome, Firefox):
         except:
             return ''
 
+    def get_button_text(self):
+        ret = self._invoke(self.execute_script, "return get_all_buttons_text();")
+        if ret:
+            return ' '.join(ret)
+        else:
+            return ''
+
+    def get_title(self):
+        try:
+            title = self.title
+            return title
+        except:
+            return ''
+
     '''get visible page tet (slower)'''
+
     def get_visible_page_text(self):
         return self._invoke(self.execute_script, "return get_all_visible_text();")
 
@@ -783,6 +816,8 @@ class XDriver(Chrome, Firefox):
             self.execute_script("window.scrollTo(0, 0);")
             return True
         except Exception as e:
+            Logger.spit("Error {} when trying to scroll to the top".format(e), warning=True,
+                        caller_prefix=XDriver._caller_prefix)
             return False
 
     # Scroll to bottom of the page
@@ -791,6 +826,8 @@ class XDriver(Chrome, Firefox):
             self.execute_script("window.scrollTo(0, document.body.scrollHeight);")
             return True
         except Exception as e:
+            Logger.spit("Error {} when trying to scroll to the bottom".format(e), warning=True,
+                        caller_prefix=XDriver._caller_prefix)
             return False
 
     # Get current page's URL scheme
@@ -819,6 +856,7 @@ class XDriver(Chrome, Firefox):
 
     ''' Get Screenshot as base64
     '''
+
     def get_screenshot_encoding(self):
         return self._invoke(super(XDriver, self).get_screenshot_as_base64)
 
@@ -910,7 +948,7 @@ class XDriver(Chrome, Firefox):
                 ref = id(el)
                 if ref not in self._REFS:  # If not already previously fetched
                     self._REFS[ref] = (
-                    self.find_element, (), {"by": By.XPATH, "value": el_dompath, "timeout": 5, "visible": False})
+                        self.find_element, (), {"by": By.XPATH, "value": el_dompath, "timeout": 3, "visible": False})
 
             for el in to_remove:
                 ret_elements.remove(el)
@@ -986,19 +1024,6 @@ class XDriver(Chrome, Firefox):
 
     def find_element_by_location(self, point_x, point_y):
         return self._invoke(self.execute_script, 'return document.elementFromPoint(%r, %r);' % (point_x, point_y))
-
-    ### Auxiliary methods ###
-
-    ''' Check if current page has loaded or not
-    '''
-
-    def has_loaded(self, timeout=0):
-        end = time() + timeout
-        while time() < end:
-            if self._invoke(self.execute_script, "return document.readyState == \"complete\""):
-                return True
-            sleep(0.1)  # let it breathe
-        return False
 
     ''' Check if the webdriver has been redirected after fetching the given URL, using the reference element stored at that time
     '''
@@ -1245,7 +1270,7 @@ class XDriver(Chrome, Firefox):
                                                                                -2000).click().perform()  # Click element to place focus, then click on upper left corner to remove focus
         return True
 
-    ''' Element specfific auxiliary methods
+    ''' Element specific auxiliary methods
     '''
 
     # Get an element's DOMPath
@@ -1272,35 +1297,64 @@ class XDriver(Chrome, Firefox):
 
     # Get element's attribute
     def get_attribute(self, element, attribute):
-        # return self._invoke(element.get_attribute, attribute, webelement = element)
         return self._invoke(self._get_attribute, element, attribute, webelement=element)
 
     def _get_attribute(self, element, attribute):
-        return element.get_attribute(attribute)
+        try:
+            attribute = element.get_attribute(attribute)
+            return attribute
+        except StaleElementReferenceException:
+            return ''
 
     # Get element text
     def get_text(self, element):
-        text = self._invoke(self.execute_script, 'return arguments[0].innerText;', element, webelement=element)
-        return text
+        try:
+            text = self._invoke(self.execute_script, 'return arguments[0].innerText;', element, webelement=element)
+            return text
+        except StaleElementReferenceException as e:
+            Logger.spit("Error {} occurred when trying to get element text".format(e), warning=True,
+                        caller_prefix=XDriver._caller_prefix)
+            return ''
 
     def get_location(self, element):
-        loc = self._invoke(self.execute_script, 'return get_loc(arguments[0]);', element, webelement=element)
-        return loc
+        try:
+            loc = self._invoke(self.execute_script, 'return get_loc(arguments[0]);', element, webelement=element)
+            return loc
+        except StaleElementReferenceException as e:
+            Logger.spit("Error {} occurred when trying to get element location".format(e), warning=True,
+                        caller_prefix=XDriver._caller_prefix)
+            return [0, 0, 0, 0]
 
     def get_property(self, element, eproperty):
-        return self._invoke(self._get_property, element, eproperty, webelement=element)
+        try:
+            return self._invoke(self._get_property, element, eproperty, webelement=element)
+        except StaleElementReferenceException as e:
+            Logger.spit("Error {} occurred when trying to get element property".format(e), warning=True,
+                        caller_prefix=XDriver._caller_prefix)
+            return ''
 
     def _get_property(self, element, eproperty):
         return element.get_property(eproperty)
 
     def get_element_property(self, element):
-        return self._invoke(self.execute_script, "return get_element_properties(arguments[0]);", element,
-                            webelement=element)
+        try:
+            return self._invoke(self.execute_script, "return get_element_properties(arguments[0]);", element,
+                                webelement=element)
+        except StaleElementReferenceException as e:
+            Logger.spit("Error {} occurred when trying to get element property".format(e), warning=True,
+                        caller_prefix=XDriver._caller_prefix)
+            return [''] * 10
 
     # Get an element's tag in lowercase
     def get_tag(self, element):
-        return self._invoke(self.execute_script, "return arguments[0].tagName.toLowerCase()", element,
-                            webelement=element)
+        try:
+            return self._invoke(self.execute_script, "return arguments[0].tagName.toLowerCase()", element,
+                                webelement=element)
+
+        except StaleElementReferenceException as e:
+            Logger.spit("Error {} occurred when trying to get element tagname".format(e), warning=True,
+                        caller_prefix=XDriver._caller_prefix)
+            return ''
 
     # Check whether an element's tag matches the given tag
     def is_tag(self, element, tag):
@@ -1310,18 +1364,9 @@ class XDriver(Chrome, Firefox):
     def get_type(self, element):
         try:
             etype = self._invoke(self.execute_script, "return arguments[0].type", element, webelement=element)
-            etype = etype.lower() if etype else ""
         except Exception as e:
             etype = self.get_attribute(element, "type")
         return etype.lower() if etype else ""
-
-    # get color
-    def get_color(self, element):
-        return self._invoke(self.execute_script, "return getComputedStyle(arguments[0]).color", element, webelement=element)
-    # define get background color
-    def get_background_color(self, element):
-        return self._invoke(self.execute_script, "return getComputedStyle(arguments[0]).backgroundColor", element,
-                            webelement=element)
 
     # Check whether an element's type matches the given type
     def is_type(self, element, ctype):
@@ -1371,9 +1416,6 @@ class XDriver(Chrome, Firefox):
     ''' Returns True if the given WebElement appears to be on the top layer of the canvas
     '''
 
-    def isOnTopLayer(self, element):
-        return self._invoke(self.execute_script, "return onTopLayer(arguments[0]);", element, webelement=element)
-
     def is_displayed(self, element):
         return self._invoke(self._is_displayed, element, webelement=element)
 
@@ -1390,7 +1432,6 @@ class XDriver(Chrome, Firefox):
     def _setup_page_scripts(self):
         self.execute_script(self._config["xdriver"]["scripts_after_load"])
 
-
     ''' Check whether the current page contains a given regex in src
     '''
 
@@ -1405,7 +1446,6 @@ class XDriver(Chrome, Firefox):
         if not body:
             return False
         return self._contains_in(body, pattern, exact=exact)
-
 
     def _contains_in(self, search_string, pattern, exact=False):
         if re.search(pattern, search_string, re.IGNORECASE if not exact else 0):
@@ -1427,7 +1467,8 @@ class XDriver(Chrome, Firefox):
                 continue
             if link not in interested_links:
                 interested_links.append([link, link_source])
-                self._REFS[id(link)] = (self.find_element, (), {"by": By.XPATH, "value": link_dompath, "timeout": 5, "visible": False})
+                self._REFS[id(link)] = (
+                self.find_element, (), {"by": By.XPATH, "value": link_dompath, "timeout": 3, "visible": False})
 
         return interested_links
 
@@ -1449,7 +1490,8 @@ class XDriver(Chrome, Firefox):
             if (not link_source.startswith('http')) or URLUtils.get_main_domain(link_source) == domain:
                 if link not in interested_links:
                     interested_links.append([link, link_source])
-                    self._REFS[id(link)] = (self.find_element, (), {"by": By.XPATH, "value": link_dompath, "timeout": 5, "visible": False})
+                    self._REFS[id(link)] = (
+                    self.find_element, (), {"by": By.XPATH, "value": link_dompath, "timeout": 3, "visible": False})
 
         return interested_links
 
@@ -1458,47 +1500,53 @@ class XDriver(Chrome, Firefox):
     def get_all_inputs(self):
         ret = self._invoke(self.execute_script, "return get_all_inputs();")
         interested_inputs = []
+        interested_inputs_dom = []
+
         for input_ele in ret:
             input, input_dompath = input_ele
             interested_inputs.append(input)
-            self._REFS[id(input)] = (self.find_element, (), {"by": By.XPATH, "value": input_dompath, "timeout": 5, "visible": False})
-        return interested_inputs
+            interested_inputs_dom.append(input_dompath)
+            self._REFS[id(input)] = (
+            self.find_element, (), {"by": By.XPATH, "value": input_dompath, "timeout": 3, "visible": False})
+
+        return interested_inputs, interested_inputs_dom
 
     def get_all_visible_username_password_inputs(self):
-        ret_password, ret_username = self._invoke(self.execute_script, "return get_all_visible_password_username_inputs();")
+        ret_password, ret_username = self._invoke(self.execute_script,
+                                                  "return get_all_visible_password_username_inputs();")
         return ret_password, ret_username
-
-    def get_all_visible_inputs(self):
-        ret = self._invoke(self.execute_script, "return get_all_visible_inputs();")
-        interested_inputs = []
-        for input_ele in ret:
-            input, input_dompath = input_ele
-            interested_inputs.append(input)
-            self._REFS[id(input)] = (
-            self.find_element, (), {"by": By.XPATH, "value": input_dompath, "timeout": 5, "visible": False})
-        return interested_inputs
 
     '''Get all <button> or clickable elements in <form>'''
 
     def get_all_buttons(self):
         ret = self._invoke(self.execute_script, "return get_all_buttons();")
         interested_buttons = []
+        interested_buttons_dom = []
+
         for button_ele in ret:
             button, button_dompath = button_ele
             interested_buttons.append(button)
-            self._REFS[id(button)] = (self.find_element, (), {"by": By.XPATH, "value": button_dompath, "timeout": 5, "visible": False})
-        return interested_buttons
+            interested_buttons_dom.append(button_dompath)
+            self._REFS[id(button)] = (
+            self.find_element, (), {"by": By.XPATH, "value": button_dompath, "timeout": 3, "visible": False})
+
+        return interested_buttons, interested_buttons_dom
 
     def get_all_elements_from_coordinate_list(self, coordinate_list):
-        ret = self._invoke(self.execute_script, "return get_all_elements_from_coordinate_list(arguments[0]);", coordinate_list)
-        interested_buttons = []
-        for button_ele in ret:
-            button, button_dompath = button_ele
-            interested_buttons.append(button)
-            self._REFS[id(button)] = (
-            self.find_element, (), {"by": By.XPATH, "value": button_dompath, "timeout": 5, "visible": False})
-        return interested_buttons
+        ret, returned_coords = self._invoke(self.execute_script,
+                                            "return get_all_elements_from_coordinate_list(arguments[0]);",
+                                            coordinate_list)
+        interested_elements = []
+        interested_elements_dom = []
 
+        for this_element in ret:
+            ele, ele_dompath = this_element
+            interested_elements.append(ele)
+            interested_elements_dom.append(ele_dompath)
+            self._REFS[id(ele)] = (
+                self.find_element, (), {"by": By.XPATH, "value": ele_dompath, "timeout": 3, "visible": False})
+
+        return interested_elements, interested_elements_dom, returned_coords
 
     def get_all_numeric_buttons(self):
         ret = self._invoke(self.execute_script, "return get_numeric_buttons();")
@@ -1507,7 +1555,8 @@ class XDriver(Chrome, Firefox):
             button, button_dompath = button_ele
             interested_buttons.append(button)
             self._REFS[id(button)] = (
-            self.find_element, (), {"by": By.XPATH, "value": button_dompath, "timeout": 5, "visible": False})
+                self.find_element, (), {"by": By.XPATH, "value": button_dompath, "timeout": 3, "visible": False})
+
         return interested_buttons
 
     '''Get all iframes'''
@@ -1515,23 +1564,29 @@ class XDriver(Chrome, Firefox):
     def get_all_iframes(self):
         ret = self._invoke(self.execute_script, "return get_all_iframes();")
         interested_iframes = []
+
         for iframe_ele in ret:
             iframe, iframe_dom_path = iframe_ele
             interested_iframes.append(iframe)
-            self._REFS[id(iframe)] = (self.find_element, (), {"by": By.XPATH, "value": iframe_dom_path, "timeout": 5, "visible": False})
+            self._REFS[id(iframe)] = (
+            self.find_element, (), {"by": By.XPATH, "value": iframe_dom_path, "timeout": 3, "visible": False})
+
         return interested_iframes
 
     def get_all_visible_imgs(self):
         ret = self._invoke(self.execute_script, "return get_all_visible_imgs();")
         interested_imgs = []
+
         for img_ele in ret:
             img, img_dompath = img_ele
             interested_imgs.append(img)
             self._REFS[id(img)] = (
-            self.find_element, (), {"by": By.XPATH, "value": img_dompath, "timeout": 5, "visible": False})
+                self.find_element, (), {"by": By.XPATH, "value": img_dompath, "timeout": 3, "visible": False})
+
         return interested_imgs
 
     '''Get displayed <form>'''
+
     def get_displayed_forms(self):
         return self._invoke(self._get_displayed_forms)
 
@@ -1547,37 +1602,98 @@ class XDriver(Chrome, Firefox):
         return ret_forms
 
     def get_form_labels(self, form):
-        f = self._invoke(Form.Form, self, form, webelement=form)  # `_invoke` it in case the form has become stale
+        f = self._invoke(FormOriginal.FormOriginal, self, form,
+                         webelement=form)  # `_invoke` it in case the form has become stale
         return f.get_labels() if form else []
 
-    '''Get third-party <script>'''
-    def get_third_party_scripts(self):
-        return self._invoke(self._get_third_party_scripts)
+    ''' Returns a tuple of two lists with all login and registration forms -> (login_forms, reg_forms)
+    '''
 
-    def _get_third_party_scripts(self):
-        first_party_domain = URLUtils.get_main_domain(self.current_url())
-        third_party_scripts = []
-        all_js_scripts = self.get_all_scripts()
-
-        for s in all_js_scripts:
-            script, script_dompath, script_src, js_source = s
-            if js_source == '':
+    def get_account_forms(self, login_only=False, signup_only=False, *args, **kwargs):
+        # TODO: find login/sign up
+        ''' When running in virtual or headless mode, the window is not fully maximized as in the real display.
+            This causes the js code to misedntify account forms as not displayed, when they are and thus they are not returned
+            The loop and `scroll_to` on all displayed forms of the page is necessary to avoid this. Not efficient but necessary. '''
+        login_forms = []
+        signup_forms = []
+        displayed_forms = self.get_displayed_forms()
+        displayed_forms.insert(0,
+                               None)  # Dummy 1st element so we try to fetch any account forms without messing with the scroll
+        for f in displayed_forms:
+            if f:
+                self.scroll_to(f)
+            else:
+                self.scroll_to_top()
+            ret = self._invoke(self.execute_script, "return get_account_forms();")  # do it recursively
+            if not ret:
+                # return ([], []) # No forms, or something went terribly wrong
                 continue
-            src_domain = URLUtils.get_main_domain(script_src)
-            if src_domain != first_party_domain:
-                third_party_scripts.append(s)
-                self._REFS[id(script)] = (self.find_element, (), {"by": By.XPATH, "value": script_dompath, "timeout": 5, "visible": False})
+            # self._REFS[id(form)] = (self.find_element, (), {"by" : By.XPATH, "value" : form_dompath, "timeout" : 5, "visible" : False})
+            for form in ret["login"]:
+                form, form_dompath = form[0], form[1]
+                if form in login_forms or not self.is_displayed(form):
+                    continue
+                login_forms.append(form)
+                self._REFS[id(form)] = (
+                    self.find_element, (), {"by": By.XPATH, "value": form_dompath, "timeout": 5, "visible": False})
+            for form in ret["signup"]:
+                form, form_dompath = form[0], form[1]
+                if form in signup_forms or not self.is_displayed(form):
+                    continue
+                signup_forms.append(form)
+                self._REFS[id(form)] = (
+                    self.find_element, (), {"by": By.XPATH, "value": form_dompath, "timeout": 5, "visible": False})
 
-        return third_party_scripts
+            if (login_only and login_forms) or (signup_only and signup_forms) or (
+                    not login_only and not signup_only and login_forms and signup_forms):
+                return (login_forms, signup_forms)
+
+        return (login_forms, signup_forms)
+
+    def get_login_forms(self, *args, **kwargs):
+        return self.get_account_forms(login_only=True, *args, **kwargs)[0]
+
+    def get_signup_forms(self, *args, **kwargs):
+        return self.get_account_forms(signup_only=True, *args, **kwargs)[1]
+
+    # Fill the given form
+    def fill_and_submit(self, form, required_only=False, override_rules={}):
+        return self.fill_form(form, submit=True, required_only=required_only, override_rules=override_rules)
+
+    def fill_form(self, form, submit=False, required_only=False, override_rules={}):
+        filtered_elements, values, submit_button, submit_button_location = self._invoke(self._fill_form, form,
+                                                                                        submit=submit,
+                                                                                        required_only=required_only,
+                                                                                        override_rules=override_rules,
+                                                                                        webelement=form)
+        return filtered_elements, values, submit_button, submit_button_location
+
+    def _fill_form(self, form, submit=False, required_only=False, override_rules={}):
+        f = FormOriginal.FormOriginal(self, form)
+        filtered_elements, values, submit_button, submit_button_location = f.fill(submit=submit,
+                                                                                  required_only=required_only,
+                                                                                  override_rules=override_rules)
+        return filtered_elements, values, submit_button, submit_button_location
+
+    # Check whether the given element is a form input
+    def is_form_input(self, element):
+        tag = self.get_tag(element)
+        etype = self.get_type(element)
+        if (tag != "input" and tag != "textarea" and tag != "select") or etype == "submit" or etype == "hidden":
+            return False
+        return True
+
+    '''Get all javascripts'''
 
     def get_all_scripts(self):
         scripts_elements = self._invoke(self.execute_script, "return get_all_scripts();")
         script_list = []
+
         for script_ele in scripts_elements:
             script, script_dompath, script_src, script_text = script_ele
-            if script_text and len(script_text):
+            if script_text and len(script_text):  # script in text
                 js_source = script_text
-            else:
+            else:  # script in src
                 try:
                     js_source = urllib.request.urlopen(script_src, timeout=0.5).read()
                 except Exception as e:
@@ -1585,16 +1701,17 @@ class XDriver(Chrome, Firefox):
                                 debug=True, caller_prefix=XDriver._caller_prefix)
                     js_source = ''
 
-            if isinstance(js_source, bytes):
-                js_source = js_source.decode('utf-8')
+            if isinstance(js_source, bytes):  # decode js
+                js_source = js_source.decode('ISO 8859-1')
 
             script_list.append([script, script_dompath, script_src, js_source])
             self._REFS[id(script)] = (
-                        self.find_element, (), {"by": By.XPATH, "value": script_dompath, "timeout": 5, "visible": False})
+                self.find_element, (), {"by": By.XPATH, "value": script_dompath, "timeout": 3, "visible": False})
 
         return script_list
 
     '''Get clickable elements contain certain patterns'''
+
     def get_clickable_elements_contains(self, patterns):
 
         button_xpaths = self._get_elements_xpath_contains(patterns, tag='button', role='button')
@@ -1603,59 +1720,112 @@ class XDriver(Chrome, Firefox):
         free_text_xpath = self._get_free_text_elements_xpath_contains(patterns)
 
         element_list = []
-        for path in button_xpaths:
+        for path in button_xpaths + link_xpaths + [input_xpath] + [free_text_xpath]:
             elements = self.find_elements_by_xpath(path)
             if elements:
                 element_list.extend(elements)
 
-        for path in link_xpaths:
-            elements = self.find_elements_by_xpath(path)
-            if elements:
-                element_list.extend(elements)
-
-        elements = self.find_elements_by_xpath(input_xpath)
-        if elements:
-            element_list.extend(elements)
-
-        elements = self.find_elements_by_xpath(free_text_xpath)
-        if elements:
-            element_list.extend(elements)
         return element_list
 
     def _get_input_elements_xpath_contains(self, patterns):
+        property_list = ["text()", "@class", "@title", "@value", "@label", "@aria-label"]
+
         return "//input[@type='submit' or @type='button'][%s]" % (
             " or ".join(["starts-with(normalize-space(%s), '%s')" % (lower(replace_nbsp(property)), patterns.lower())
-                         for property in ["text()", "@class", "@title", "@value", "@label", "@aria-label"]]))
+                         for property in property_list]))
 
+    def _get_elements_xpath_contains(self, patterns, tag, role):
+        property_list = ["text()", "@class", "@title", "@value", "@label", "@aria-label"]
+
+        rule1 = "//%s[" % (tag if tag else "*") + " or ".join(
+            ["starts-with(normalize-space(%s), '%s')" % (lower(replace_nbsp(property)), patterns.lower())
+             for property in property_list])
+
+        rule2 = "//*[@role='%s'][%s]" % (role if role else "*", "starts-with(normalize-space(.), '%s')" % patterns)
+        return [rule1, rule2]
 
     def _get_free_text_elements_xpath_contains(self, patterns):
         xpath_base = "//*[starts-with(normalize-space(%s), '%s')]" % (lower(replace_nbsp("text()")), patterns.lower())
         return '%s[not(self::script)][not(.%s)]' % (xpath_base, xpath_base)
 
     '''Get first common DOM parent between two elements'''
+
     def get_dom_common_parents(self, element1, element2):
-        return self._invoke(self.execute_script, 'return findFirstCommonAncestor(arguments[0], arguments[1]);', element1, element2)
+        try:
+            return self._invoke(self.execute_script, 'return findFirstCommonAncestor(arguments[0], arguments[1]);',
+                                element1, element2)
+        except StaleElementReferenceException as e:
+            Logger.spit("Error {} occurred when getting the common DOM parent between two elements".format(e),
+                        warning=True, caller_prefix=XDriver._caller_prefix)
+            return None
 
     '''Get DOM distance between two elements (by adding up the DOM distance to common parent)'''
+
     def get_dom_dist(self, element1, element2):
-        return self._invoke(self.execute_script, 'return get_domdist(arguments[0], arguments[1]);', element1, element2)
+        try:
+            return self._invoke(self.execute_script, 'return get_domdist(arguments[0], arguments[1]);', element1,
+                                element2)
+        except StaleElementReferenceException as e:
+            Logger.spit("Error {} occurred when getting the DOM distance between two elements".format(e),
+                        warning=True, caller_prefix=XDriver._caller_prefix)
+            dom_depth = self.get_dom_depth()
+            return [dom_depth, dom_depth]
 
     '''Get DOM depth for an element from the root'''
+
     def get_dom_depth_forelement(self, element):
-        return self._invoke(self.execute_script, 'return get_dom_depth_forelement(arguments[0]);', element)
+        try:
+            return self._invoke(self.execute_script, 'return get_dom_depth_forelement(arguments[0]);', element,
+                                webelement=element)
+        except StaleElementReferenceException as e:
+            Logger.spit("Error {} occurred when getting the common DOM depth of an element".format(e),
+                        warning=True, caller_prefix=XDriver._caller_prefix)
+            dom_depth = self.get_dom_depth()
+            return [dom_depth, dom_depth]
 
     '''Get DOM tree depth'''
+
     def get_dom_depth(self):
         return self._invoke(self.execute_script, 'return get_dom_depth();')
 
     '''Check visilibility of an element'''
-    def check_visibility(self, element):
-        return self._invoke(self.execute_script, 'return onTopLayer(arguments[0]);', element)
+
+    def check_visibility(self, element_loc):
+        x1, y1, x2, y2 = element_loc
+        return np.sum([1 for x in element_loc if x <= 0]) == 0 and \
+            (x2 - x1) > 0 and \
+            (y2 - y1) > 0
+
+    def get_element_prev_sibling(self, element):
+        return self._invoke(self.execute_script, 'return arguments[0].previousElementSibling;', element)
+
+    def obfuscate_inputs(self):
+        return self._invoke(self.execute_script, 'return obfuscate_input();')
+
+    def obfuscate_inputs_byimage(self):
+        return self._invoke(self.execute_script, 'return obfuscate_input_image();')
+
+    def obfucate_buttons(self):
+        return self._invoke(self.execute_script, 'return obfuscate_button();')
 
     '''recaptcha'''
+
+    def get_implicit_recaptcha(self):
+
+        xpath_base = "//*[starts-with(normalize-space(%s), '%s')]" % (lower(replace_nbsp("@class")),
+                                                                      "g-recaptcha")
+
+        element_list = []
+        elements = self._invoke(super(XDriver, self).find_elements, By.XPATH, xpath_base)
+
+        if elements:
+            element_list.extend(elements)
+        return element_list
+
     def get_recaptcha_checkbox(self):
 
-        xpath_base = "//*[starts-with(normalize-space(%s), '%s')]" % (lower(replace_nbsp("@class")), "recaptcha-checkbox-border")
+        xpath_base = "//*[starts-with(normalize-space(%s), '%s')]" % (
+        lower(replace_nbsp("@class")), "recaptcha-checkbox-border")
 
         element_list = []
         elements = self._invoke(super(XDriver, self).find_elements, By.XPATH, xpath_base)

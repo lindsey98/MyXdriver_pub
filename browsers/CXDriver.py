@@ -6,7 +6,6 @@ from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from xdriver.xutils.Logger import Logger
 from xdriver.xutils.Exceptions import *
 from xdriver.xutils.proxy.ProxyWrapper import ProxyWrapper
-import xdriver.CONFIGS as configs
 from uuid import uuid4
 from pyvirtualdisplay import Display
 import os
@@ -59,10 +58,10 @@ class CXDriver(XDriver):
 		_chromeOpts.add_argument("--enable-logging=stderr --v=1")
 		_chromeOpts.add_argument('--disable-site-isolation-trials')
 		# TODO: replace with your own user-agent
-		# _chromeOpts.add_argument(
-		# 	"user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36")
 		_chromeOpts.add_argument(
-			"user-agent=user-agent={}".format(configs.user_agent))
+			"user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36")
+		# _chromeOpts.add_argument(
+		# 	"user-agent=user-agent={}".format(configs.user_agent))
 
 		_chromeOpts.set_capability('unhandledPromptBehavior', 'dismiss')  # dismiss
 		_chromeOpts.set_capability('pageLoadStrategy', 'eager')

@@ -16,7 +16,6 @@ setup(
   },
   package_data = {'' : ["*.js", "*.json", "*.sh", "chromedriver", "geckodriver",
 						"operadriver", "mitmdump", "*.txt", "*.py"]},
-  version = '0.1', # version number
   description = '',   # Package descriptin
   author = 'Ruofan Liu, Kostas Drakonakis',
   author_email = 'liu.ruofan16@u.nus.edu',

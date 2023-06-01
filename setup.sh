@@ -228,36 +228,41 @@ file_id="1ouhn17V2ylzKnLIbrP-IpV7Rl7pmHtW-"
 output_file="model_final.pth"
 cd xutils/forms/button_locator_models/
 wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate 'https://docs.google.com/uc?export=download&id='$file_id -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=$file_id" -O "$output_file" && rm -rf /tmp/cookies.txt
-
+cd ../../../
 
 # install phishintention
-#PACKAGE_NAME="phishintention"
-## Fetch list of installed packages
-#installed_packages=$(conda list)
-#if echo "$installed_packages" | grep -q "$PACKAGE_NAME"; then
-#  echo "PhishIntention is already installed, skip installation"
-#else
-#  git clone https://github.com/lindsey98/PhishIntention.git
-#  cd PhishIntention
-#  chmod +x ./setup.sh
-#  ./setup.sh
-#  cd ../
-#  rm -rf PhishIntention
-#fi
+conda activate "$ENV_NAME"
+PACKAGE_NAME="phishintention"
+# Fetch list of installed packages
+installed_packages=$(conda list)
+if echo "$installed_packages" | grep -q "$PACKAGE_NAME"; then
+  echo "PhishIntention is already installed, skip installation"
+else
+  git clone https://github.com/lindsey98/PhishIntention.git
+  cd PhishIntention
+  chmod +x ./setup.sh
+  ./setup.sh
+  cd ../
+  rm -rf PhishIntention
+fi
 
+conda activate "$ENV_NAME"
 pip install httpcore
 pip install h2
 pip install hyperframe
 pip install fuzzywuzzy
 pip install h11==0.8.1
 pip install selenium==4.0.0
+pip install selenium-stealth
 
 ## Google cloud
+conda activate "$ENV_NAME"
 pip install --upgrade --user google-api-python-client
 pip install --upgrade --user google-cloud
 pip install google-cloud-vision
 pip install google-cloud-translate
 ## Install MMOCR
+conda activate "$ENV_NAME"
 pip install mmengine
 pip install mmcv==2.0.0rc4 -f https://download.openmmlab.com/mmcv/dist/cu111/torch1.9/index.html
 pip install mmdet
@@ -266,3 +271,6 @@ cd mmocr
 pip install -v -e .
 cd ../
 
+pwd
+conda activate "$ENV_NAME"
+pip install -v .

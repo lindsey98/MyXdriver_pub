@@ -15,6 +15,7 @@ import io
 import base64
 import os
 
+
 class Form():
     _caller_prefix = "Form"
     _unknown_label = "UNKNOWN"
@@ -52,7 +53,7 @@ class Form():
             for (let i = 0; i <= inputslist.length; i++) {
                 let input = inputslist[i];
                 console.log(input);
-                
+
                 try{
                     let nodetag = input.tagName.toLowerCase();
                     let etype = input.type;
@@ -72,7 +73,7 @@ class Form():
                 }
             } 
         '''
-        )
+                             )
 
     """
 		Reinitialize when the screenshot has changed
@@ -87,6 +88,7 @@ class Form():
     """
 		Detect text in the element by OCR
 	"""
+
     def _call_ocr(self, input_ele_loc):
         try:
             screenshot_img = Image.open(io.BytesIO(base64.b64decode(self._driver.get_screenshot_encoding())))
@@ -111,6 +113,7 @@ class Form():
     """
         Detect text in the element by OCR (on elements screenshot)
     """
+
     def _call_ocr_element(self, element):
         try:
             ele_screenshot = Image.open(io.BytesIO(base64.b64decode(element.screenshot_as_base64)))
@@ -194,7 +197,8 @@ class Form():
                             start_time = time.time()
                             ocr_string_label = self._call_ocr_element(closest_label)
                             end_time = time.time()
-                            Logger.spit("Run OCR on input element {} 's nearest label takes time: {:.4f}s".format(jj, end_time - start_time),
+                            Logger.spit("Run OCR on input element {} 's nearest label takes time: {:.4f}s".format(jj,
+                                                                                                                  end_time - start_time),
                                         debug=True, caller_prefix=Form._caller_prefix)
                             matched_rule = FE._decide_input_rule_given_str(ocr_string_label)
 
@@ -424,7 +428,7 @@ class Form():
             element = self._buttons[0]  # fixme: I only click the most relevant button for conservativeness
 
         etext = self._driver.get_text(element)
-        if etext and len(etext)>0:
+        if etext and len(etext) > 0:
             etext = self._driver.get_attribute(element, "value")
         Logger.spit("Try clicking button {} ...".format(etext), debug=True,
                     caller_prefix=Form._caller_prefix)

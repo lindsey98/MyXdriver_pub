@@ -16,24 +16,16 @@ Our main goal is to report suspicious behaviours in web login process, such as (
 **Setup**
 -
 Implemented and tested on Ubuntu 16.04 and 20.04 with python3.7. Should work on other debian-based systems as well.
-1. 
-Create an environment with python==3.7
-Install torch, torchvision compatible with your CUDA, see here: https://pytorch.org/get-started/previous-versions/
-
-2. Install compatible Detectron2, see https://detectron2.readthedocs.io/en/latest/tutorials/install.html 
-
-3. Install PhishIntention by
-```
- pip install git+https://github.com/lindsey98/PhishIntention.git
-```
-
-4. Clone this MyXDriver_pub repo and `cd` into it
+1.  
+Clone this MyXDriver_pub repo and `cd` into it
  ```
 git clone https://github.com/lindsey98/MyXdriver_pub.git
 cd MyXdriver_pub
 ```
-
-5. run `./setup.sh`
+2. Manually download chromedriver executable (https://chromedriver.chromium.org/), put it under config/webdrivers.
 * Make sure the webdrivers' versions are compatible with the corresponding browsers' version
 
-6. Install mmocr: See https://mmcv.readthedocs.io/en/latest/get_started/installation.html
+3. run `./setup.sh`
+
+4. testing script: testing/webinteraction.py
+

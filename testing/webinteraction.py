@@ -13,8 +13,8 @@ if __name__ == "__main__":
                         rec='ABINet',
                         device='cuda')
     button_locator_model = SubmissionButtonLocator(
-        button_locator_config='/home/ruofan/git_space/phishing-research/web_interaction/xdriver3-open/xutils/forms/button_locator_models/config.yaml',
-        button_locator_weights_path='/home/ruofan/git_space/phishing-research/web_interaction/xdriver3-open/xutils/forms/button_locator_models/model_final.pth')
+        button_locator_config='xutils/forms/button_locator_models/config.yaml',
+        button_locator_weights_path='xutils/forms/button_locator_models/model_final.pth')
 
     InteractionModel = WebInteraction(phishintention_cls=phishintention_cls,
                                       mmocr_model=mmocr_model,
@@ -27,7 +27,7 @@ if __name__ == "__main__":
     driver.set_page_load_timeout(timeout_time)
     time.sleep(sleep_time)  # fixme: you have to sleep sometime, otherwise the browser will keep crashing
 
-    target = 'www.facebook.com'
+    target = 'https://www.spotify.com/account/twostepauth/manage/'
 
     driver.get(target, accept_cookie=True, click_popup=True)
     benign, algo_time, total_time, \
