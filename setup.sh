@@ -202,52 +202,60 @@ function check_xvfb {
 check_browsers
 check_mitm
 check_xvfb
-pip3 install --upgrade .
+# # Create a new conda environment with Python 3.7
+# Source the Conda configuration
+CONDA_BASE=$(conda info --base)
+source "$CONDA_BASE/etc/profile.d/conda.sh"
+ENV_NAME="myenv"
 
-pip install urllib3
-pip install requests==2.28.1
-pip install unidecode
-# ImportError: cannot import name 'SSLv3_METHOD' from 'OpenSSL.SSL'
-pip3 install pyopenssl==22.0.0
-# AttributeError: module 'lib' has no attribute 'OpenSSL_add_all_algorithms'
-pip3 install cryptography==38.0.4
+# Check if the environment already exists
+conda info --envs | grep -w "$ENV_NAME" > /dev/null
 
-# Install torch
-mkl_path=$(conda info --base)/envs/"$ENV_NAME"/lib
-echo "MKL path is $mkl_path"
-# Export the LD_LIBRARY_PATH environment variable
-export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$mkl_path"
+if [ $? -eq 0 ]; then
+   # If the environment exists, activate it
+   echo "Activating Conda environment $ENV_NAME"
+   conda activate "$ENV_NAME"
+else
+   # If the environment doesn't exist, create it with Python 3.7 and activate it
+   echo "Creating and activating new Conda environment $ENV_NAME with Python 3.7"
+   conda create -n "$ENV_NAME" python=3.8
+   conda activate "$ENV_NAME"
+fi
+# install phishintention
+#PACKAGE_NAME="phishintention"
+## Fetch list of installed packages
+#installed_packages=$(conda list)
+#if echo "$installed_packages" | grep -q "$PACKAGE_NAME"; then
+#  echo "PhishIntention is already installed, skip installation"
+#else
+#  git clone https://github.com/lindsey98/PhishIntention.git
+#  cd PhishIntention
+#  chmod +x ./setup.sh
+#  ./setup.sh
+#  cd ../
+#  rm -rf PhishIntention
+#fi
 
-# Get the CUDA and cuDNN versions, install pytorch, torchvision
-conda install typing_extensions
-cuda_version=$(nvcc --version | grep release | awk '{print $6}' | cut -c2- | awk -F. '{print $1"."$2}')
-pip install torch==1.9.0 torchvision -f "https://download.pytorch.org/whl/cu${cuda_version//.}/torch_stable.html"
+pip install httpcore
+pip install h2
+pip install hyperframe
+pip install fuzzywuzzy
+pip install h11==0.8.1
+pip install selenium==4.0.0
 
-# Install Detectron2
-git clone https://github.com/facebookresearch/detectron2.git
-python -m pip install -e detectron2
+## Google cloud
+pip install --upgrade --user google-api-python-client
+pip install google-cloud-vision
 
-# cuda_version=$(nvcc --version | grep release | awk '{print $6}' | cut -c2- | awk -F. '{print $1$2}')
-# case $cuda_version in
-#     "111" | "102" | "101")
-#       python -m pip install detectron2 -f \
-#   https://dl.fbaipublicfiles.com/detectron2/wheels/cu"$cuda_version"/torch1.9/index.html
-#     ;;
-#     *)
-#       echo "Please build Detectron2 from source https://detectron2.readthedocs.io/en/latest/tutorials/install.html">&2
-#       exit 1
-#       ;;
-# esac
-
-pip3 install --upgrade scipy
-## MMOCR
-pip install -U openmim
-mim install mmengine
-mim install mmdet==3.0.0rc5
-mim install mmcv==2.0.0rc4 
+## Install MMOCR
+pip install mmengine
+pip install mmcv==2.0.0rc4 -f https://download.openmmlab.com/mmcv/dist/cu111/torch1.9/index.html
+pip install mmdet
 git clone https://github.com/open-mmlab/mmocr.git
 cd mmocr
 pip install -v -e .
+cd ../
+rm -rf mmocr
 
 # download xdriver model
 pwd
