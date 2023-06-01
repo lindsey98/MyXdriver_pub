@@ -268,8 +268,9 @@ pip install mmcv==2.0.0rc4 -f https://download.openmmlab.com/mmcv/dist/cu111/tor
 pip install mmdet
 git clone https://github.com/open-mmlab/mmocr.git
 cd mmocr
-pip install -v -e .
+pip install -v .
 cd ../
+rm -rf mmocr
 
 pwd
 conda activate "$ENV_NAME"
