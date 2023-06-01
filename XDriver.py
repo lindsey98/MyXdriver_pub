@@ -29,7 +29,6 @@ from xdriver.xutils.forms import Form
 from xdriver.xutils.forms import FormOriginal
 
 from time import time, sleep
-from pyvirtualdisplay import Display
 import re
 import os
 import json
