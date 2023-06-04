@@ -428,7 +428,7 @@ class Form():
             element = self._buttons[0]  # fixme: I only click the most relevant button for conservativeness
 
         etext = self._driver.get_text(element)
-        if etext and len(etext) > 0:
+        if (not etext) or len(etext)==0:
             etext = self._driver.get_attribute(element, "value")
         Logger.spit("Try clicking button {} ...".format(etext), debug=True,
                     caller_prefix=Form._caller_prefix)
