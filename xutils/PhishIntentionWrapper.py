@@ -140,11 +140,15 @@ class PhishIntentionWrapper():
         target_this, domain_this, this_conf = self.siamese_inference_OCR_reimplement(domain_map, reference_logo)
 
         # domain matcher to avoid FP
-        if (target_this is not None) and (tldextract.extract(url).domain+'.'+tldextract.extract(url).suffix not in domain_this):
-            # avoid fp due to godaddy domain parking, ignore webmail provider (ambiguous)
-            if target_this == 'GoDaddy' or target_this == "Webmail Provider" or target_this == "Government of the United Kingdom":
+        if target_this is not None:
+            if tldextract.extract(url).domain + '.' + tldextract.extract(url).suffix not in domain_this:
+                # avoid fp due to godaddy domain parking, ignore webmail provider (ambiguous)
+                if target_this == 'GoDaddy' or target_this == "Webmail Provider" or target_this == "Government of the United Kingdom":
+                    target_this = None  # ignore the prediction
+                    domain_this = None  # ignore the prediction
+            else:  # benign, real target
                 target_this = None  # ignore the prediction
-                this_conf = None
+                domain_this = None  # ignore the prediction
 
         return target_this, this_conf
 
