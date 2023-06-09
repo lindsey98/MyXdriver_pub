@@ -257,8 +257,8 @@ pip install selenium-stealth
 
 ## Google cloud
 conda activate "$ENV_NAME"
-pip install --upgrade --user google-api-python-client
-pip install --upgrade --user google-cloud
+pip install google-api-python-client
+pip install google-cloud
 pip install google-cloud-vision
 pip install google-cloud-translate
 ## Install MMOCR

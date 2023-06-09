@@ -14,6 +14,24 @@ setup(
   package_dir = {
 	'xdriver' : '.',
   },
+  install_requires=[
+      'httpcore',
+      'h2',
+      'hyperframe',
+      'fuzzywuzzy',
+      'h11==0.8.1',
+      'selenium==4.0.0',
+      'selenium-stealth',
+      'google-api-python-client',
+      'google-cloud',
+      'google-cloud-vision',
+      'google-cloud-translate',
+      'mmengine',
+      'mmcv==2.0.0rc4',
+      'mmocr',
+      'mmdet',
+      'phishintention', # https://github.com/lindsey98/PhishIntention.git
+  ],
   package_data = {'' : ["*.js", "*.json", "*.sh", "chromedriver", "geckodriver",
 						"operadriver", "mitmdump", "*.txt", "*.py"]},
   description = '',   # Package descriptin
