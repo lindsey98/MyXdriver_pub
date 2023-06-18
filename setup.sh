@@ -217,7 +217,7 @@ if [ $? -eq 0 ]; then
    conda activate "$ENV_NAME"
 else
    # If the environment doesn't exist, create it with Python 3.7 and activate it
-   echo "Creating and activating new Conda environment $ENV_NAME with Python 3.7"
+   echo "Creating and activating new Conda environment $ENV_NAME with Python 3.8"
    conda create -n "$ENV_NAME" python=3.8
    conda activate "$ENV_NAME"
 fi
