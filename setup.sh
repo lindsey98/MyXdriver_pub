@@ -250,7 +250,6 @@ fi
 
 conda activate "$ENV_NAME"
 conda run -n "$ENV_NAME" pip install fuzzywuzzy
-conda run -n "$ENV_NAME" pip install selenium-stealth
 
 ## Google cloud
 conda activate "$ENV_NAME"

@@ -20,7 +20,6 @@ setup(
       'oauth2client',
       'hyperframe',
       'fuzzywuzzy',
-      'selenium-stealth',
       'google-api-python-client',
       'google-cloud',
       'google-cloud-vision',
