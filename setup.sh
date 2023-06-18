@@ -236,7 +236,7 @@ cd ../../../
 conda activate "$ENV_NAME"
 PACKAGE_NAME="phishintention"
 # Fetch list of installed packages
-installed_packages=$(conda list)
+installed_packages=$(conda run -n "$ENV_NAME" conda list)
 if echo "$installed_packages" | grep -q "$PACKAGE_NAME"; then
   echo "PhishIntention is already installed, skip installation"
 else
@@ -249,12 +249,7 @@ else
 fi
 
 conda activate "$ENV_NAME"
-conda run -n "$ENV_NAME" vpip install httpcore
-conda run -n "$ENV_NAME" pip install h2
-conda run -n "$ENV_NAME" pip install hyperframe
 conda run -n "$ENV_NAME" pip install fuzzywuzzy
-conda run -n "$ENV_NAME" pip install h11==0.8.1
-conda run -n "$ENV_NAME" pip install selenium==3.141.0
 conda run -n "$ENV_NAME" pip install selenium-stealth
 
 ## Google cloud
