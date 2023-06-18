@@ -13,8 +13,8 @@ if __name__ == "__main__":
                         rec='ABINet',
                         device='cuda')
     button_locator_model = SubmissionButtonLocator(
-        button_locator_config='xutils/forms/button_locator_models/config.yaml',
-        button_locator_weights_path='xutils/forms/button_locator_models/model_final.pth')
+        button_locator_config='../xutils/forms/button_locator_models/config.yaml',
+        button_locator_weights_path='../xutils/forms/button_locator_models/model_final.pth')
 
     InteractionModel = WebInteraction(phishintention_cls=phishintention_cls,
                                       mmocr_model=mmocr_model,

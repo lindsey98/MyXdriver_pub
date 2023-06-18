@@ -85,7 +85,7 @@ class XDriver(Chrome, Firefox):
             "no_default_browser_check": True,  # Prevent popup to make browser the default (if this is a fresh instance)
             "disable_cache": True,  # Disable all possible levels of cache
             "profile": None,  # Use specific profile. If None, a temporary new one will be generated
-            "headless": True,  # Start headless
+            "headless": False,  # Start headless
             "virtual": False,  # Use vrtual display
             "vpn": False,  # Opera built-in VPN -- Not currently supported
             "no_blink_feature": True
@@ -1460,16 +1460,20 @@ class XDriver(Chrome, Firefox):
     def _get_all_links(self):
         ret = self._invoke(self.execute_script, "return get_all_links();")
         interested_links = []
+        link_doms = []
+        link_sources = []
         for link_ele in ret:
             link, link_dompath, link_source = link_ele
             if re.search(XDriver._forbidden_suffixes, link_source, re.IGNORECASE):
                 continue
             if link not in interested_links:
-                interested_links.append([link, link_source])
+                interested_links.append(link)
+                link_doms.append(link_dompath)
+                link_sources.append(link_source)
                 self._REFS[id(link)] = (
                 self.find_element, (), {"by": By.XPATH, "value": link_dompath, "timeout": 3, "visible": False})
 
-        return interested_links
+        return interested_links, link_doms, link_sources
 
     ''' Return a list of all anchor's `href` attributes, that point to the same domain
     '''
@@ -1710,6 +1714,20 @@ class XDriver(Chrome, Firefox):
         return script_list
 
     '''Get clickable elements contain certain patterns'''
+    def get_all_clickable_elements(self):
+        btns, btns_dom = self.get_all_buttons()
+        links, links_dom, _ = self.get_all_links()
+        image_elements = self._invoke(self.execute_script, "return get_all_clickable_imgs();")
+        images = []
+        images_dom = []
+
+        for ele in image_elements:
+            img, dompath = ele
+            images.append(img)
+            images_dom.append(dompath)
+            self._REFS[id(input)] = (self.find_element, (), {"by": By.XPATH, "value": dompath, "timeout": 3, "visible": False})
+
+        return (btns, btns_dom), (links, links_dom), (images, images_dom)
 
     def get_clickable_elements_contains(self, patterns):
 

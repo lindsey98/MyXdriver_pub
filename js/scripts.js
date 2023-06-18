@@ -412,6 +412,21 @@ var get_all_visible_imgs = function(){
     return returned_imgs;
 }
 
+var get_all_clickable_imgs = function(){
+    var imgs = document.getElementsByTagName("img");
+    returned_imgs = [];
+    for (let img of imgs){
+        if (!onTopLayer(img)) {
+            continue; // invisible
+        }
+        var [nodetag, etype, el_src, aria_label, eplaceholder, evalue, onclick, id, name, action] = get_element_properties(img);
+        if (onclick || (el_src && len(el_src)>0)) {
+            returned_imgs.push([img, '//html'+get_dompath(img)]);
+        }
+    }
+    return returned_imgs;
+}
+
 
 var get_local_storage = function(){
     var storage = {};

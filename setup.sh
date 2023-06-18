@@ -221,6 +221,8 @@ else
    conda create -n "$ENV_NAME" python=3.8
    conda activate "$ENV_NAME"
 fi
+# Set Conda environment as an environment variable
+export MYENV=$(conda info --base)/envs/"$ENV_NAME"
 
 # download xdriver model
 pwd
@@ -247,25 +249,25 @@ else
 fi
 
 conda activate "$ENV_NAME"
-pip install httpcore
-pip install h2
-pip install hyperframe
-pip install fuzzywuzzy
-pip install h11==0.8.1
-pip install selenium==4.0.0
-pip install selenium-stealth
+conda run -n "$ENV_NAME" vpip install httpcore
+conda run -n "$ENV_NAME" pip install h2
+conda run -n "$ENV_NAME" pip install hyperframe
+conda run -n "$ENV_NAME" pip install fuzzywuzzy
+conda run -n "$ENV_NAME" pip install h11==0.8.1
+conda run -n "$ENV_NAME" pip install selenium==3.141.0
+conda run -n "$ENV_NAME" pip install selenium-stealth
 
 ## Google cloud
 conda activate "$ENV_NAME"
-pip install google-api-python-client
-pip install google-cloud
-pip install google-cloud-vision
-pip install google-cloud-translate
+conda run -n "$ENV_NAME" pip install google-api-python-client
+conda run -n "$ENV_NAME" pip install google-cloud
+conda run -n "$ENV_NAME" pip install google-cloud-vision
+conda run -n "$ENV_NAME" pip install google-cloud-translate
 ## Install MMOCR
 conda activate "$ENV_NAME"
-pip install mmengine
-pip install mmcv==2.0.0rc4 -f https://download.openmmlab.com/mmcv/dist/cu111/torch1.9/index.html
-pip install mmdet
+conda run -n "$ENV_NAME" pip install mmengine
+conda run -n "$ENV_NAME" pip install mmcv==2.0.0rc4 -f https://download.openmmlab.com/mmcv/dist/cu111/torch1.9/index.html
+conda run -n "$ENV_NAME" pip install mmdet
 git clone https://github.com/open-mmlab/mmocr.git
 cd mmocr
 pip install -v .
@@ -274,4 +276,4 @@ rm -rf mmocr
 
 pwd
 conda activate "$ENV_NAME"
-pip install -v .
+conda run -n "$ENV_NAME" pip install -v .

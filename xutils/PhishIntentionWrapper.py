@@ -448,6 +448,8 @@ class PhishIntentionWrapper():
                         Logger.spit("Cannot go back to the original URL, Exit ...", warning=True, caller_prefix=PhishIntentionWrapper._caller_prefix)
                         return reach_crp, orig_url, current_url  # TIMEOUT Error
 
+
+
         return reach_crp, orig_url, current_url
 
     def dynamic_analysis_reimplement(self, driver: XDriver):
