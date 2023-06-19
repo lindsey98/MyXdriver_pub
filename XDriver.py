@@ -351,8 +351,8 @@ class XDriver(Chrome, Firefox):
 
         if isinstance(self, CXDriver) or isinstance(self, OXDriver):  # Chrome, Opera
             Chrome.__init__(self,
-                            # ChromeDriverManager().install(), # install latest version
-                            executable_path=kwargs.get("executable_path"),
+                            ChromeDriverManager().install(), # install latest version
+                            # executable_path=kwargs.get("executable_path"),
                             chrome_options=kwargs.get("chrome_options"),
                             desired_capabilities=kwargs.get("desired_capabilities"))
 
@@ -1464,14 +1464,11 @@ class XDriver(Chrome, Firefox):
         link_sources = []
         for link_ele in ret:
             link, link_dompath, link_source = link_ele
-            if re.search(XDriver._forbidden_suffixes, link_source, re.IGNORECASE):
-                continue
-            if link not in interested_links:
-                interested_links.append(link)
-                link_doms.append(link_dompath)
-                link_sources.append(link_source)
-                self._REFS[id(link)] = (
-                self.find_element, (), {"by": By.XPATH, "value": link_dompath, "timeout": 3, "visible": False})
+            interested_links.append(link)
+            link_doms.append(link_dompath)
+            link_sources.append(link_source)
+            self._REFS[id(link)] = (
+            self.find_element, (), {"by": By.XPATH, "value": link_dompath, "timeout": 3, "visible": False})
 
         return interested_links, link_doms, link_sources
 
@@ -1718,6 +1715,25 @@ class XDriver(Chrome, Firefox):
         btns, btns_dom = self.get_all_buttons()
         links, links_dom, _ = self.get_all_links()
         image_elements = self._invoke(self.execute_script, "return get_all_clickable_imgs();")
+        all_leaf_node_xpath = ["//span[not(*)]", "//div[not(*)]",
+                               "//p[not(*)]", "//i[not(*)]"] # fixme: I find some leaf DOM element implements onclick event with class, difficult to trace
+        other_elements_pre = []
+        other_elements = []
+        other_elements_dom = []
+        for path in all_leaf_node_xpath:
+            elements = self.find_elements_by_xpath(path)
+            if elements:
+                other_elements_pre.extend(elements)
+
+        for ele in other_elements_pre:
+            try:
+                dompath = self.get_dompath(ele)
+                other_elements_dom.append(dompath)
+                other_elements.append(ele)
+                self._REFS[id(ele)] = (self.find_element, (), {"by": By.XPATH, "value": dompath, "timeout": 3, "visible": False})
+            except:
+                continue
+
         images = []
         images_dom = []
 
@@ -1725,9 +1741,10 @@ class XDriver(Chrome, Firefox):
             img, dompath = ele
             images.append(img)
             images_dom.append(dompath)
-            self._REFS[id(input)] = (self.find_element, (), {"by": By.XPATH, "value": dompath, "timeout": 3, "visible": False})
+            self._REFS[id(img)] = (self.find_element, (), {"by": By.XPATH, "value": dompath, "timeout": 3, "visible": False})
 
-        return (btns, btns_dom), (links, links_dom), (images, images_dom)
+        return (btns, btns_dom), (links, links_dom), (images, images_dom), \
+            (other_elements, other_elements_dom)
 
     def get_clickable_elements_contains(self, patterns):
 

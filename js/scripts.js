@@ -261,9 +261,59 @@ var get_all_links = function(){
         if (source != null) {
             returned_links.push([link, '//html' + get_dompath(link), source]);
         }
+        else{
+            returned_links.push([link, '//html' + get_dompath(link), "#"]);
+        }
     }
     return returned_links;
 }
+
+var get_login_ui = function(){
+    LOGIN = "log|sign|auth|user";
+    var uis = document.getElementsByTagName('span');
+    returned_links = [];
+
+    for (let ele of uis) {
+        if (!onTopLayer(ele)){
+            continue;
+        }
+        if(ele.outerHTML.match(LOGIN)){
+            returned_links.push([ele, '//html' + get_dompath(ele)]);
+        }
+    }
+
+    var uis = document.getElementsByTagName('i');
+    for (let ele of uis) {
+        if (!onTopLayer(ele)){
+            continue;
+        }
+        if(ele.outerHTML.match(LOGIN)){
+            returned_links.push([ele, '//html' + get_dompath(ele)]);
+        }
+    }
+
+    var uis = document.getElementsByTagName('p');
+    for (let ele of uis) {
+        if (!onTopLayer(ele)){
+            continue;
+        }
+        if(ele.outerHTML.match(LOGIN)){
+            returned_links.push([ele, '//html' + get_dompath(ele)]);
+        }
+    }
+
+    var uis = document.getElementsByTagName('div');
+    for (let ele of uis) {
+        if (!onTopLayer(ele)){
+            continue;
+        }
+        if(ele.outerHTML.match(LOGIN)){
+            returned_links.push([ele, '//html' + get_dompath(ele)]);
+        }
+    }
+    return returned_links;
+}
+
 
 var get_all_inputs=function(){
     var inputs = document.getElementsByTagName("input");
@@ -655,107 +705,6 @@ var obfuscate_input = function(){
 
 }
 
-// var obfuscate_input_image = function(){
-//
-//     let inputslist = document.getElementsByTagName('input'); // get all inputs
-//     for (let i = 0; i <= inputslist.length; i++) {
-//         let input = inputslist[i];
-//         console.log(input);
-//         try {
-//             let nodetag = input.tagName.toLowerCase();
-//             let location = get_loc(input);
-//             let etype = input.type;
-//             if (nodetag == "select" || etype == "submit" || etype == "button" || etype == "image" || etype == "reset" || etype == "radio" || etype == "checkbox" || etype == "hidden") {
-//                 continue;
-//             }
-//             if (location[2] - location[0] <= 5 || location[3] - location[1] <= 5){
-//                 continue; // ignore hidden inputs
-//             }
-//         }
-//         catch(err){
-//             console.log(err);
-//             continue;
-//         }
-//
-//         if (isNode(input) && input.getAttribute("placeholder") != ''){
-//             // overlay label element
-//             let elem = document.createElement('label');
-//             elem.innerHTML = input.placeholder; // set the text inside label as the input's placeholder
-//             elem.style.visibility = 'visible';
-//
-//             html2canvas(elem).then((canvas) => {
-//               let newb = elem.cloneNode(false);
-//               try{
-//                   input.parentNode.insertBefore(newb, input);
-//                   let dataurl = canvas.toDataURL("image/png");
-//
-//                   newb.style.backgroundImage = "url(" + dataurl + ")";
-//                   newb.style.height = canvas.height;
-//                   newb.style.width = canvas.width;
-//                   newb.style.left = window.scrollX + elem.getBoundingClientRect().left + "px";
-//                   newb.style.top = window.scrollY + elem.getBoundingClientRect().top + "px";
-//                   newb.innerHTML = '';
-//               }
-//               catch(err){
-//                   console.log(err);
-//               }
-//
-//             });
-//
-//
-//             try {
-//
-//                 // element obfuscation
-//                 input.setAttribute('placeholder', '');
-//                 input.setAttribute('aria-label', '');
-//                 input.setAttribute('name', '');
-//                 input.setAttribute('value', '');
-//                 input.setAttribute('aria-describedby', '');
-//                 elem.innerHTML = '';
-//                 // button.style.position='absolute';
-//                 elem.style.height='0px';
-//                 elem.style.width='0px';
-//                 elem.style.padding = "0px 0px 0px 0px";
-//                 elem.style.borderWidth = "0px";
-//             }
-//             catch(err){
-//                 console.log(err);
-//             }
-//         }
-//
-//     }
-//
-// }
-// var obfuscate_input_image = function(){
-//
-//     let labelslist = document.getElementsByTagName('label'); // get all inputs
-//     for (let i = 0; i <= labelslist.length; i++) {
-//         let label = labelslist[i];
-//
-//         console.log(label);
-//
-//         html2canvas(label).then((canvas) => {
-//           let newb = document.createElement("button");
-//           try{
-//               label.parentNode.insertBefore(newb, label);
-//               let dataurl = canvas.toDataURL("image/png");
-//
-//               newb.style.backgroundImage = "url(" + dataurl + ")";
-//               newb.style.height = canvas.height;
-//               newb.style.width = canvas.width;
-//               newb.style.left = window.scrollX + label.getBoundingClientRect().left + "px";
-//               newb.style.top = window.scrollY + label.getBoundingClientRect().top + "px";
-//               newb.innerHTML = '';
-//           }
-//           catch(err){
-//               console.log(err);
-//           }
-//
-//         });
-//
-//         }
-// }
-
 var obfuscate_button = function(){
         // get all <button>
         let returned_buttons = document.getElementsByTagName("button");
@@ -798,4 +747,6 @@ var obfuscate_button = function(){
 
 
 }
+
+
 console.log("XDriver lib is setup!");
