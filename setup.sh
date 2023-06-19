@@ -229,16 +229,19 @@ pwd
 file_id="1ouhn17V2ylzKnLIbrP-IpV7Rl7pmHtW-"
 output_file="model_final.pth"
 cd xutils/forms/button_locator_models/
-wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate 'https://docs.google.com/uc?export=download&id='$file_id -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=$file_id" -O "$output_file" && rm -rf /tmp/cookies.txt
+if [ -e "$output_file" ]; then
+  echo "button locator model already exists ..."
+else
+  wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate 'https://docs.google.com/uc?export=download&id='$file_id -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=$file_id" -O "$output_file" && rm -rf /tmp/cookies.txt
+fi
 cd ../../../
 
 # install phishintention
-conda activate "$ENV_NAME"
 PACKAGE_NAME="phishintention"
 # Fetch list of installed packages
 installed_packages=$(conda run -n "$ENV_NAME" conda list)
 if echo "$installed_packages" | grep -q "$PACKAGE_NAME"; then
-  echo "PhishIntention is already installed, skip installation"
+  echo "$PACKAGE_NAME is already installed, skip installation"
 else
   git clone https://github.com/lindsey98/PhishIntention.git
   cd PhishIntention
@@ -258,14 +261,19 @@ conda run -n "$ENV_NAME" pip install google-cloud-translate
 
 ## Install MMOCR
 conda activate "$ENV_NAME"
-conda run -n "$ENV_NAME" pip install mmengine
-conda run -n "$ENV_NAME" pip install mmcv==2.0.0rc4 -f https://download.openmmlab.com/mmcv/dist/cu111/torch1.9/index.html
-conda run -n "$ENV_NAME" pip install mmdet
-git clone https://github.com/open-mmlab/mmocr.git
-cd mmocr
-pip install -v .
-cd ../
-rm -rf mmocr
+PACKAGE_NAME="mmocr"
+if echo "$installed_packages" | grep -q "$PACKAGE_NAME"; then
+  echo "$PACKAGE_NAME is already installed, skip installation"
+else
+  conda run -n "$ENV_NAME" pip install mmengine
+  conda run -n "$ENV_NAME" pip install mmcv==2.0.0rc4 -f https://download.openmmlab.com/mmcv/dist/cu111/torch1.9/index.html
+  conda run -n "$ENV_NAME" pip install mmdet
+  git clone https://github.com/open-mmlab/mmocr.git
+  cd mmocr
+  pip install -v .
+  cd ../
+  rm -rf mmocr
+fi
 
 pwd
 conda run -n "$ENV_NAME" pip install -v .
