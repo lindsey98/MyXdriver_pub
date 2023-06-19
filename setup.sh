@@ -202,7 +202,7 @@ function check_xvfb {
 check_browsers
 check_mitm
 check_xvfb
-# # Create a new conda environment with Python 3.7
+# # Create a new conda environment with Python 3.8
 # Source the Conda configuration
 CONDA_BASE=$(conda info --base)
 source "$CONDA_BASE/etc/profile.d/conda.sh"
@@ -216,7 +216,7 @@ if [ $? -eq 0 ]; then
    echo "Activating Conda environment $ENV_NAME"
    conda activate "$ENV_NAME"
 else
-   # If the environment doesn't exist, create it with Python 3.7 and activate it
+   # If the environment doesn't exist, create it with Python 3.8 and activate it
    echo "Creating and activating new Conda environment $ENV_NAME with Python 3.8"
    conda create -n "$ENV_NAME" python=3.8
    conda activate "$ENV_NAME"
@@ -248,15 +248,14 @@ else
   rm -rf PhishIntention
 fi
 
-conda activate "$ENV_NAME"
-conda run -n "$ENV_NAME" pip install fuzzywuzzy
 
-## Google cloud
-conda activate "$ENV_NAME"
+## Google cloud API
+conda run -n "$ENV_NAME" pip install fuzzywuzzy
 conda run -n "$ENV_NAME" pip install google-api-python-client
 conda run -n "$ENV_NAME" pip install google-cloud
 conda run -n "$ENV_NAME" pip install google-cloud-vision
 conda run -n "$ENV_NAME" pip install google-cloud-translate
+
 ## Install MMOCR
 conda activate "$ENV_NAME"
 conda run -n "$ENV_NAME" pip install mmengine
@@ -269,5 +268,4 @@ cd ../
 rm -rf mmocr
 
 pwd
-conda activate "$ENV_NAME"
 conda run -n "$ENV_NAME" pip install -v .
