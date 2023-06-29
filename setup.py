@@ -33,7 +33,8 @@ setup(
       'mime',
       'unidecode',
       'faker',
-      'psutil'
+      'psutil',
+      'editdistance'
   ],
   package_data = {'' : ["*.js", "*.json", "*.sh", "chromedriver", "geckodriver",
 						"operadriver", "mitmdump", "*.txt", "*.py"]},
