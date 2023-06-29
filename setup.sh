@@ -258,6 +258,7 @@ conda run -n "$ENV_NAME" pip install google-api-python-client
 conda run -n "$ENV_NAME" pip install google-cloud
 conda run -n "$ENV_NAME" pip install google-cloud-vision
 conda run -n "$ENV_NAME" pip install google-cloud-translate
+conda run -n "$ENV_NAME" pip install googletrans
 
 ## Install MMOCR
 conda activate "$ENV_NAME"
