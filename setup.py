@@ -32,7 +32,8 @@ setup(
       'selenium-stealth',
       'mime',
       'unidecode',
-      'faker'
+      'faker',
+      'psutil'
   ],
   package_data = {'' : ["*.js", "*.json", "*.sh", "chromedriver", "geckodriver",
 						"operadriver", "mitmdump", "*.txt", "*.py"]},
