@@ -31,8 +31,9 @@ setup(
       'phishintention', # https://github.com/lindsey98/PhishIntention.git
       'selenium-stealth',
       'selenium==4.0.0',
-	  'mime',
-	  'unidecode'
+      'mime',
+      'unidecode',
+      'faker'
   ],
   package_data = {'' : ["*.js", "*.json", "*.sh", "chromedriver", "geckodriver",
 						"operadriver", "mitmdump", "*.txt", "*.py"]},
