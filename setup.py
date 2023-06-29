@@ -30,7 +30,6 @@ setup(
       'mmdet',
       'phishintention', # https://github.com/lindsey98/PhishIntention.git
       'selenium-stealth',
-      'selenium==4.0.0',
       'mime',
       'unidecode',
       'faker'
