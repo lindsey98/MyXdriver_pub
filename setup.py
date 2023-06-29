@@ -29,6 +29,8 @@ setup(
       'mmocr',
       'mmdet',
       'phishintention', # https://github.com/lindsey98/PhishIntention.git
+      'selenium-stealth',
+      'selenium==4.0.0'
   ],
   package_data = {'' : ["*.js", "*.json", "*.sh", "chromedriver", "geckodriver",
 						"operadriver", "mitmdump", "*.txt", "*.py"]},
