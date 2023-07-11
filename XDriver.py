@@ -1453,6 +1453,22 @@ class XDriver(Chrome, Firefox):
 
     ''' Return a list of all links
     '''
+    def get_all_links_orig(self):
+        return self._invoke(self._get_all_links_orig)
+
+    def _get_all_links_orig(self):
+        ret = self._invoke(self.execute_script, "return get_all_links();")
+        interested_links = []
+        for link_ele in ret:
+            link, link_dompath, link_source = link_ele
+            if re.search(XDriver._forbidden_suffixes, link_source, re.IGNORECASE):
+                continue
+            if link not in interested_links:
+                interested_links.append([link, link_source])
+                self._REFS[id(link)] = (self.find_element, (), {"by": By.XPATH, "value": link_dompath, "timeout": 3, "visible": False})
+
+        return interested_links
+    
 
     def get_all_links(self):
         return self._invoke(self._get_all_links)
