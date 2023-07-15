@@ -1857,7 +1857,7 @@ class XDriver(Chrome, Firefox):
               obfuscate_input();
         """)
 
-    def obfucate_buttons(self):
+    def obfuscate_buttons(self):
         # Inject a script tag that loads the html2canvas library from a CDN
         return self._invoke(self.execute_script, """
               var script = document.createElement('script');

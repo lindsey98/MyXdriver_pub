@@ -666,15 +666,21 @@ var obfuscate_input = function(){
         }
 
         if (isNode(input) && input.getAttribute("placeholder") != ''){
-            // overlay label element
-            html2canvas(input).then(canvas => {
-              // Create a new label element
-              var label = document.createElement('label');
-              // Convert the canvas to a data URL and set it as the background of the label
-              label.style.backgroundImage = 'url(' + canvas.toDataURL() + ')';
-              // Insert the label after the input field
-              input.parentNode.insertBefore(label, input);
-            });
+            try{
+                // overlay label element
+                html2canvas(input).then(canvas => {
+                  // Create a new label element
+                  var label = document.createElement('label');
+                  // Convert the canvas to a data URL and set it as the background of the label
+                  label.style.backgroundImage = 'url(' + canvas.toDataURL() + ')';
+                  // Insert the label after the input field
+                  input.parentNode.insertBefore(label, input);
+                });
+            }
+            catch(err){
+                console.log(err);
+                continue;
+            }
         }
 
     }
@@ -687,18 +693,24 @@ var obfuscate_button = function(){
 
     // clone to new buttons with empty innerHTML, but use image as background
     for (let button of returned_buttons){
-        // Use html2canvas to take a screenshot of the button
-        html2canvas(button).then(canvas => {
-            // Create a new image element
-            var img = document.createElement('img');
-            try{
-                img.src = canvas.toDataURL();
-                button.parentNode.replaceChild(img, button);
-            }
-            catch(err){
-                console.log(err);
-            }
-        });
+        try{
+            // Use html2canvas to take a screenshot of the button
+            html2canvas(button).then(canvas => {
+                // Create a new image element
+                var img = document.createElement('img');
+                try{
+                    img.src = canvas.toDataURL();
+                    button.parentNode.replaceChild(img, button);
+                }
+                catch(err){
+                    console.log(err);
+                }
+            });
+        }
+        catch(err){
+            console.log(err);
+            continue;
+        }
     }
 }
 
