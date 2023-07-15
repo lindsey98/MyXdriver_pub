@@ -1850,13 +1850,22 @@ class XDriver(Chrome, Firefox):
         return self._invoke(self.execute_script, 'return arguments[0].previousElementSibling;', element)
 
     def obfuscate_inputs(self):
-        return self._invoke(self.execute_script, 'return obfuscate_input();')
-
-    def obfuscate_inputs_byimage(self):
-        return self._invoke(self.execute_script, 'return obfuscate_input_image();')
+        return self._invoke(self.execute_script, """
+              var script = document.createElement('script');
+              script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/0.5.0-beta4/html2canvas.min.js';
+              document.head.appendChild(script);
+              obfuscate_input();
+        """)
 
     def obfucate_buttons(self):
-        return self._invoke(self.execute_script, 'return obfuscate_button();')
+        # Inject a script tag that loads the html2canvas library from a CDN
+        return self._invoke(self.execute_script, """
+              var script = document.createElement('script');
+              script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/0.5.0-beta4/html2canvas.min.js';
+              document.head.appendChild(script);
+              obfuscate_button();
+        """)
+
 
     '''recaptcha'''
 

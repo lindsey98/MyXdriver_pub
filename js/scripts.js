@@ -667,38 +667,14 @@ var obfuscate_input = function(){
 
         if (isNode(input) && input.getAttribute("placeholder") != ''){
             // overlay label element
-            let elem = document.createElement('label');
-            elem.innerHTML = input.placeholder; // set the text inside label as the input's placeholder
-            elem.style.visibility = 'visible';
-
-            try {
-                let label = input.previousElementSibling;
-                let nodetag = label.tagName.toLowerCase();
-                if (nodetag == 'label') {
-                    continue;
-                }
-            }
-            catch(err){
-                console.log(err);
-            }
-
-            try {
-                input.parentNode.insertBefore(elem, input);
-                elem.style.zIndex = 1000;
-
-                elem.style.left = window.scrollX + input.getBoundingClientRect().left + "px";
-                elem.style.top = window.scrollY + input.getBoundingClientRect().top + "px";
-
-                // element obfuscation
-                input.setAttribute('placeholder', '');
-                input.setAttribute('aria-label', '');
-                input.setAttribute('name', '');
-                input.setAttribute('value', '');
-                input.setAttribute('aria-describedby', '');
-            }
-            catch(err){
-                console.log(err);
-            }
+            html2canvas(input).then(canvas => {
+              // Create a new label element
+              var label = document.createElement('label');
+              // Convert the canvas to a data URL and set it as the background of the label
+              label.style.backgroundImage = 'url(' + canvas.toDataURL() + ')';
+              // Insert the label after the input field
+              input.parentNode.insertBefore(label, input);
+            });
         }
 
     }
@@ -706,46 +682,24 @@ var obfuscate_input = function(){
 }
 
 var obfuscate_button = function(){
-        // get all <button>
-        let returned_buttons = document.getElementsByTagName("button");
+    // get all <button>
+    let returned_buttons = document.getElementsByTagName("button");
 
-        // clone to new buttons with empty innerHTML, but use image as background
-        for (let button of returned_buttons){
-
-            html2canvas(button).then((canvas) => {
-              let newb = button.cloneNode(false);
-              try{
-                  // console.log(canvas.toDataURL("image/png"));
-                  button.parentNode.insertBefore(newb, button);
-                  let dataurl = canvas.toDataURL("image/png");
-
-                  newb.style.backgroundImage = "url(" + dataurl + ")";
-                  newb.style.height = canvas.height;
-                  newb.style.width = canvas.width;
-                  newb.style.left = window.scrollX + button.getBoundingClientRect().left + "px";
-                  newb.style.top = window.scrollY + button.getBoundingClientRect().top + "px";
-                  // newb.style.position='absolute';
-                  newb.innerHTML = '';
-              }
-              catch(err){
-                  console.log(err);
-              }
-
-            });
-
-        }
-
-        // hide original buttons
-        for (let button of returned_buttons){
-            button.innerHTML = '';
-            // button.style.position='absolute';
-            button.style.height='0px';
-            button.style.width='0px';
-            button.style.padding = "0px 0px 0px 0px";
-            button.style.borderWidth = "0px";
-        }
-
-
+    // clone to new buttons with empty innerHTML, but use image as background
+    for (let button of returned_buttons){
+        // Use html2canvas to take a screenshot of the button
+        html2canvas(button).then(canvas => {
+            // Create a new image element
+            var img = document.createElement('img');
+            try{
+                img.src = canvas.toDataURL();
+                button.parentNode.replaceChild(img, button);
+            }
+            catch(err){
+                console.log(err);
+            }
+        });
+    }
 }
 
 
