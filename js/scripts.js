@@ -650,37 +650,29 @@ var obfuscate_input = function(){
         let input = inputslist[i];
         console.log(input);
         try {
-            let nodetag = input.tagName.toLowerCase();
             let location = get_loc(input);
-            let etype = input.type;
-            if (nodetag == "select" || etype == "submit" || etype == "button" || etype == "image" || etype == "reset" || etype == "radio" || etype == "checkbox" || etype == "hidden") {
-                continue;
-            }
             if (location[2] - location[0] <= 5 || location[3] - location[1] <= 5){
                 continue; // ignore hidden inputs
+            }
+            if (isNode(input) && input.getAttribute("placeholder") != ''){
+                // overlay label element
+                html2canvas(input).then(canvas => {
+                    var img = document.createElement('img');
+                    img.src = canvas.toDataURL();
+                    // Insert the label after the input field
+                    input.parentNode.insertBefore(img, input);
+                     // element obfuscation
+                    input.setAttribute('placeholder', '');
+                    input.setAttribute('aria-label', '');
+                    input.setAttribute('name', '');
+                    input.setAttribute('value', '');
+                    input.setAttribute('aria-describedby', '');
+                });
             }
         }
         catch(err){
             console.log(err);
             continue;
-        }
-
-        if (isNode(input) && input.getAttribute("placeholder") != ''){
-            try{
-                // overlay label element
-                html2canvas(input).then(canvas => {
-                  // Create a new label element
-                  var label = document.createElement('label');
-                  // Convert the canvas to a data URL and set it as the background of the label
-                  label.style.backgroundImage = 'url(' + canvas.toDataURL() + ')';
-                  // Insert the label after the input field
-                  input.parentNode.insertBefore(label, input);
-                });
-            }
-            catch(err){
-                console.log(err);
-                continue;
-            }
         }
 
     }
@@ -694,18 +686,48 @@ var obfuscate_button = function(){
     // clone to new buttons with empty innerHTML, but use image as background
     for (let button of returned_buttons){
         try{
-            // Use html2canvas to take a screenshot of the button
-            html2canvas(button).then(canvas => {
-                // Create a new image element
+            var buttonLink = button.getAttribute('href');  // Get the link from the button
+            var buttonClass = button.getAttribute('class');  // Get the class from the button
+
+            html2canvas(button).then(function(canvas) {
                 var img = document.createElement('img');
-                try{
-                    img.src = canvas.toDataURL();
-                    button.parentNode.replaceChild(img, button);
-                }
-                catch(err){
-                    console.log(err);
-                }
+                img.src = canvas.toDataURL();
+                var a = document.createElement('a');  // Create a new anchor element
+                a.href = buttonLink;  // Set the href to the button's link
+                a.className = buttonClass;  // Set the class to the button's class
+                a.appendChild(img);  // Append the image to the anchor
+                button.parentNode.replaceChild(a, button);  // Replace the button with the anchor
             });
+        }
+        catch(err){
+            console.log(err);
+            continue;
+        }
+    }
+
+    let inputslist = document.getElementsByTagName('input'); // get all inputs
+    for (let input of inputslist){
+        try {
+            let location = get_loc(input);
+            let etype = input.type;
+            if (location[2] - location[0] <= 5 || location[3] - location[1] <= 5){
+                continue; // ignore hidden inputs
+            }
+            if (etype == "submit" || etype == "button") {
+                var inputLink = input.getAttribute('href');  // Get the link from the button
+                var inputClass = input.getAttribute('class');  // Get the class from the button
+
+                html2canvas(input).then(function(canvas) {
+                    var img = document.createElement('img');
+                    img.src = canvas.toDataURL();
+                    var a = document.createElement('a');  // Create a new anchor element
+                    a.href = inputLink;  // Set the href to the button's link
+                    a.className = inputClass;  // Set the class to the button's class
+                    a.appendChild(img);  // Append the image to the anchor
+                    input.parentNode.replaceChild(a, input);  // Replace the button with the anchor
+                });
+            }
+
         }
         catch(err){
             console.log(err);

@@ -1849,23 +1849,33 @@ class XDriver(Chrome, Firefox):
     def get_element_prev_sibling(self, element):
         return self._invoke(self.execute_script, 'return arguments[0].previousElementSibling;', element)
 
-    def obfuscate_inputs(self):
-        return self._invoke(self.execute_script, """
-              var script = document.createElement('script');
-              script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/0.5.0-beta4/html2canvas.min.js';
-              document.head.appendChild(script);
-              obfuscate_input();
+    def obfuscate_page(self):
+        self._invoke(self.execute_script, """
+          var script = document.createElement('script');
+          script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/0.5.0-beta4/html2canvas.min.js';
+          document.head.appendChild(script);
         """)
-
-    def obfuscate_buttons(self):
-        # Inject a script tag that loads the html2canvas library from a CDN
-        return self._invoke(self.execute_script, """
-              var script = document.createElement('script');
-              script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/0.5.0-beta4/html2canvas.min.js';
-              document.head.appendChild(script);
-              obfuscate_button();
-        """)
-
+        sleep(1)
+        self._invoke(self.execute_script, """
+            function replaceText(element) {
+                if (element.nodeType === Node.TEXT_NODE) {
+                    element.textContent = element.textContent.replace(/login/gi, 'l0gin');
+                } else {
+                    // Replace in id, name, type etc. attributes
+                    ['id', 'name', 'type', 'aria-label', 'value', 'placeholder'].forEach(attr => {
+                        if (element.hasAttribute(attr) && element.getAttribute(attr).includes('login')) {
+                            let newAttr = element.getAttribute(attr).replace(/login/gi, 'l0gin');
+                            element.setAttribute(attr, newAttr);
+                        }
+                    });
+                    element.childNodes.forEach(replaceText);
+                }
+            }
+            window.onload = function() {
+                replaceText(document.body);
+        };""")
+        sleep(1)
+        return self._invoke(self.execute_script, """obfuscate_input(); obfuscate_button();""")
 
     '''recaptcha'''
 
