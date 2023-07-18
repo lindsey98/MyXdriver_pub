@@ -654,6 +654,10 @@ var obfuscate_input = function(){
             if (location[2] - location[0] <= 5 || location[3] - location[1] <= 5){
                 continue; // ignore hidden inputs
             }
+            let etype = input.type;
+            if (etype == "submit" || etype == "button"){
+                continue;
+            }
             if (isNode(input) && input.getAttribute("placeholder") != ''){
                 // overlay label element
                 html2canvas(input).then(canvas => {
