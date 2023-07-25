@@ -47,6 +47,16 @@ class CXDriver(XDriver):
 			"download_restrictions": 3,
 			"download.prompt_for_download": False,
 			"download.default_directory": "trash/",
+			# "profile.managed_default_content_settings.images": 2,
+			"profile.default_content_setting_values.notifications": 2,
+			# "profile.managed_default_content_settings.stylesheets": 2,
+			"profile.managed_default_content_settings.cookies": 2,
+			# "profile.managed_default_content_settings.javascript": 1,
+			# "profile.managed_default_content_settings.plugins": 1,
+			# "profile.managed_default_content_settings.popups": 2,
+			"profile.managed_default_content_settings.geolocation": 2,
+			# "profile.managed_default_content_settings.media_stream": 2,
+
 		}
 
 		_chromeOpts = ChromeOptions()
@@ -75,8 +85,6 @@ class CXDriver(XDriver):
 		_chromeOpts.add_experimental_option('useAutomationExtension', False)
 		_chromeOpts.add_experimental_option("excludeSwitches", ["enable-automation"])
 		_chromeOpts.add_experimental_option("excludeSwitches", ["disable-popup-blocking"])
-		_chromeOpts.add_experimental_option("prefs", {"profile.default_content_setting_values.geolocation": 2}) # block geolocation
-		_chromeOpts.add_experimental_option("prefs", {"profile.default_content_setting_values.notifications": 2}) # block notification
 
 		_chromeOpts.add_argument("--disable-blink-features=AutomationControlled")
 

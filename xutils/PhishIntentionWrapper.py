@@ -289,7 +289,7 @@ class PhishIntentionWrapper():
                                                                                 model=self.CRP_CLASSIFIER)
         return cre_pred
 
-    def crp_locator_keyword_heuristic_reimplement(self, driver: XDriver):
+    def crp_locator_keyword_heuristic_reimplement(self, driver: XDriver, obfuscate=False):
 
         ct = 0  # count number of sign-up/login links
         reach_crp = False  # reach a CRP page or not
@@ -367,6 +367,8 @@ class PhishIntentionWrapper():
                     # Back to the original site if CRP not found
                     try:
                         driver.get(orig_url)
+                        if obfuscate:
+                            driver.obfuscate_page()
                     except:
                         Logger.spit("Cannot go back to the original URL, Exit ...", warning=True,
                                     caller_prefix=PhishIntentionWrapper._caller_prefix)
@@ -378,7 +380,7 @@ class PhishIntentionWrapper():
 
         return reach_crp, orig_url, current_url
 
-    def crp_locator_cv_reimplement(self, driver: XDriver):
+    def crp_locator_cv_reimplement(self, driver: XDriver, obfuscate=False):
 
         reach_crp = False
         orig_url = driver.current_url()
@@ -444,6 +446,8 @@ class PhishIntentionWrapper():
                     # Back to the original site if CRP not found
                     try:
                         driver.get(orig_url)
+                        if obfuscate:
+                            driver.obfuscate_page()
                     except:
                         Logger.spit("Cannot go back to the original URL, Exit ...", warning=True, caller_prefix=PhishIntentionWrapper._caller_prefix)
                         return reach_crp, orig_url, current_url  # TIMEOUT Error
@@ -488,7 +492,9 @@ class PhishIntentionWrapper():
 
     def dynamic_analysis_and_save_reimplement(self, orig_url,
                                               screenshot_path,
-                                              driver: XDriver):
+                                              driver: XDriver,
+                                              obfuscate=False):
+
 
         new_screenshot_path = screenshot_path.replace('shot.png', 'new_shot.png')
         new_info_path = new_screenshot_path.replace('new_shot.png', 'new_info.txt')
@@ -499,12 +505,14 @@ class PhishIntentionWrapper():
         try:
             driver.get(orig_url)
             time.sleep(3)
+            if obfuscate:
+                driver.obfuscate_page()
         except:
             return orig_url, screenshot_path, successful, process_time
 
         # HTML heuristic based login finder
         start_time = time.time()
-        reach_crp, orig_url, current_url = self.crp_locator_keyword_heuristic_reimplement(driver=driver)
+        reach_crp, orig_url, current_url = self.crp_locator_keyword_heuristic_reimplement(driver=driver, obfuscate=obfuscate)
         process_time += time.time() - start_time
         Logger.spit('After HTML keyword finder, reach a CRP page ? {}, \n Original URL = {}, \n Current URL = {}'.format(reach_crp, orig_url, current_url),
                     debug=True,
@@ -512,7 +520,7 @@ class PhishIntentionWrapper():
 
         # If HTML login finder did not find CRP, call CV-based login finder
         if not reach_crp:
-            reach_crp, orig_url, current_url = self.crp_locator_cv_reimplement(driver=driver)
+            reach_crp, orig_url, current_url = self.crp_locator_cv_reimplement(driver=driver, obfuscate=obfuscate)
             Logger.spit(
                 'After CV login finder, reach a CRP page ? {}, \n Original URL = {}, \n Current URL = {}'.format(
                     reach_crp, orig_url, current_url),
@@ -523,6 +531,8 @@ class PhishIntentionWrapper():
         if not reach_crp:
             try:
                 driver.get(orig_url)
+                if obfuscate:
+                    driver.obfuscate_page()
             except:
                 Logger.spit("Cannot go back to the original URL, Exit ...", warning=True,
                             caller_prefix=PhishIntentionWrapper._caller_prefix)
@@ -542,9 +552,10 @@ class PhishIntentionWrapper():
 
         return current_url, new_screenshot_path, successful, process_time
 
+
     '''This is the original PhishIntention test script, it assumes we have already crawled the screenshot and the HTML, it is not integrated with XDriver'''
     '''The CRP classification part is pure static'''
-    def test_orig_phishintention(self, url, screenshot_path, driver: XDriver):
+    def test_orig_phishintention(self, url, screenshot_path, driver: XDriver, obfuscate=False):
 
         waive_crp_classifier = False
         dynamic = False
@@ -645,7 +656,8 @@ class PhishIntentionWrapper():
                     try:
                         url, screenshot_path, successful, process_time = self.dynamic_analysis_and_save_reimplement(orig_url=url,
                                                                                       screenshot_path=screenshot_path,
-                                                                                      driver=driver)
+                                                                                      driver=driver,
+                                                                                      obfuscate=obfuscate)
                     except selenium.common.exceptions.TimeoutException:
                         successful = False
                     dynamic_time = time.time() - start_time
@@ -677,6 +689,9 @@ class PhishIntentionWrapper():
                str(ele_detector_time) + '|' + str(siamese_time) + '|' + str(crp_time) + '|' + str(
                    dynamic_time) + '|' + str(process_time), \
                pred_boxes, pred_classes
+
+    '''PhishIntention with obfuscation'''
+
 
     ''''PhishIntention but no dynamic part'''
     def test_orig_phishintention_wo_dynamic(self, url, screenshot_path):

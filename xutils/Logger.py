@@ -1,7 +1,9 @@
 #!/usr/bin/python
 
 from .Exceptions import *
-
+import logging
+import os
+import re
 class Logger():
 
 	_caller_prefix = "LOGGER"
@@ -18,7 +20,10 @@ class Logger():
 
 	@classmethod
 	def set_logfile(cls, logfile):
+		if os.path.isfile(logfile):
+			os.remove(logfile)  # Remove the existing log file
 		Logger._logfile = logfile
+
 	@classmethod
 	def unset_logfile(cls):
 		Logger.set_logfile(None)
@@ -48,17 +53,31 @@ class Logger():
 		Logger._warning = False
 
 	@classmethod
-	def spit(cls, msg, warning = False, debug = False, error = False, exception = False, caller_prefix = ""):
-		caller_prefix = "[%s]" % caller_prefix if caller_prefix else ""
+	def spit(cls, msg, warning=False, debug=False, error=False, exception=False, caller_prefix=""):
+		logging.basicConfig(level=logging.DEBUG if Logger._debug else logging.WARNING)
+		caller_prefix = f"[{caller_prefix}]" if caller_prefix else ""
 		prefix = "[FATAL]" if error else "[DEBUG]" if debug else "[WARNING]" if warning else "[EXCEPTION]" if exception else ""
-		txtcolor = TxtColors.FATAL if error else TxtColors.DEBUG if debug else TxtColors.WARNING if warning else "[EXCEPTION]" if exception else TxtColors.OK
-		if Logger._verbose:
-			# if not debug or Logger._debug:
-			if (not debug and not warning) or (debug and Logger._debug) or (warning and Logger._warning):
-				print("%s%s%s %s%s" % (txtcolor, caller_prefix, prefix, msg, TxtColors.ENDC))
+		logger = logging.getLogger("custom_logger")  # Choose an appropriate logger name
+		# if not debug or Logger._debug:
+		# 	if (not debug and not warning) or (debug and Logger._debug) or (warning and Logger._warning):
+		# 		log_func = logger.error if error else logger.debug if debug else logger.warning if warning else logger.exception if exception else logger.info
+		# 		log_func("%s%s%s %s" % (caller_prefix, prefix, msg, TxtColors.ENDC))
 		if Logger._logfile:
-			with open(Logger._logfile, "a") as wfp:
-				wfp.write("%s%s%s %s%s\n" % (txtcolor, caller_prefix, prefix, msg, TxtColors.ENDC))
+			log_msg = re.sub(r"\033\[\d+m", "", msg)
+			log_handler = logging.FileHandler(Logger._logfile, mode='a')
+			log_formatter = logging.Formatter('%(message)s')
+			log_handler.setFormatter(log_formatter)
+			logger.addHandler(log_handler)
+			logger.propagate = False
+			logger.setLevel(logging.DEBUG if Logger._debug else logging.WARNING)
+			logger.debug("%s%s%s %s" % (caller_prefix, prefix, log_msg, TxtColors.ENDC))
+			logger.removeHandler(log_handler)
+		else:
+			if Logger._verbose:
+				txtcolor = TxtColors.FATAL if error else TxtColors.DEBUG if debug else TxtColors.WARNING if warning else "[EXCEPTION]" if exception else TxtColors.OK
+				# if not debug or Logger._debug:
+				if (not debug and not warning) or (debug and Logger._debug) or (warning and Logger._warning):
+					print("%s%s%s %s%s" % (txtcolor, caller_prefix, prefix, msg, TxtColors.ENDC))
 
 	@classmethod
 	def screenshot(cls, filename): # No filename extension needed; default to .png
