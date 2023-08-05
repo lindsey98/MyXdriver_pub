@@ -5,12 +5,15 @@ import io
 import base64
 import numpy as np
 from phishintention.src.AWL_detector import element_config
-
+import torch
 
 class SubmissionButtonLocator(PhishIntentionWrapper):
 
     def __init__(self, button_locator_weights_path, button_locator_config):
-        _, self.BUTTON_SUBMISSION_MODEL = element_config(rcnn_weights_path=button_locator_weights_path, rcnn_cfg_path=button_locator_config)
+        device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        _, self.BUTTON_SUBMISSION_MODEL = element_config(rcnn_weights_path=button_locator_weights_path, 
+                                                         rcnn_cfg_path=button_locator_config,
+                                                         device=device)
 
     def return_submit_button(self, screenshot_encoding):
         screenshot_img = Image.open(io.BytesIO(base64.b64decode(screenshot_encoding)))
