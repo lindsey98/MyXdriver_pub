@@ -221,11 +221,8 @@ else
    conda create -n "$ENV_NAME" python=3.8
    conda activate "$ENV_NAME"
 fi
-# Set Conda environment as an environment variable
-export MYENV=$(conda info --base)/envs/"$ENV_NAME"
 
 # download xdriver model
-pwd
 file_id="1ouhn17V2ylzKnLIbrP-IpV7Rl7pmHtW-"
 output_file="model_final.pth"
 cd xutils/forms/button_locator_models/
@@ -251,7 +248,6 @@ else
   rm -rf PhishIntention
 fi
 
-
 ## Google cloud API
 conda run -n "$ENV_NAME" pip install fuzzywuzzy
 conda run -n "$ENV_NAME" pip install google-api-python-client
@@ -271,7 +267,7 @@ else
   conda run -n "$ENV_NAME" pip install mmdet
   git clone https://github.com/open-mmlab/mmocr.git
   cd mmocr
-  pip install -v .
+  conda run -n "$ENV_NAME" pip install -v .
   cd ../
   rm -rf mmocr
 fi
