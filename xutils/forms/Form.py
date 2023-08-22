@@ -210,33 +210,33 @@ class Form():
                                 types.append(FE._etype)
                                 locations.append(element_loc)
 
-                            else:
-                                # 3.2 get PhishIntention reported labels
-                                if len(self._labels_locations) > 0:
-                                    input_ele_to_labels_dist, *_ = bbox_boarder_dist_simple(
-                                        [self._driver.get_location(element)],
-                                        self._labels_locations)
-                                    input_ele_to_labels_dist = input_ele_to_labels_dist[0]  # N_labels
-                                    closest_label_loc = self._labels_locations[np.argsort(input_ele_to_labels_dist)[0]]
+                            # else:
+                            #     # 3.2 get PhishIntention reported labels
+                            #     if len(self._labels_locations) > 0:
+                            #         input_ele_to_labels_dist, *_ = bbox_boarder_dist_simple(
+                            #             [self._driver.get_location(element)],
+                            #             self._labels_locations)
+                            #         input_ele_to_labels_dist = input_ele_to_labels_dist[0]  # N_labels
+                            #         closest_label_loc = self._labels_locations[np.argsort(input_ele_to_labels_dist)[0]]
 
-                                    start_time = time.time()
-                                    ocr_string_label = self._call_ocr(closest_label_loc)
-                                    end_time = time.time()
-                                    Logger.spit(
-                                        "Run OCR on input element {} 's nearest label takes time: {:.4f}s".format(
-                                            jj, end_time - start_time),
-                                        debug=True, caller_prefix=Form._caller_prefix)
-                                    matched_rule = FE._decide_input_rule_given_str(ocr_string_label)
+                            #         start_time = time.time()
+                            #         ocr_string_label = self._call_ocr(closest_label_loc)
+                            #         end_time = time.time()
+                            #         Logger.spit(
+                            #             "Run OCR on input element {} 's nearest label takes time: {:.4f}s".format(
+                            #                 jj, end_time - start_time),
+                            #             debug=True, caller_prefix=Form._caller_prefix)
+                            #         matched_rule = FE._decide_input_rule_given_str(ocr_string_label)
 
-                                    if matched_rule is not None:
-                                        # one label can only correspond to one input, the label cannot be re-assigned to other inputs
-                                        self._labels_locations.pop(np.argsort(input_ele_to_labels_dist)[0])
-                                        filter_elements.append(element)
-                                        filter_elements_dom.append(element_dom)
-                                        rules.append(matched_rule)
-                                        visibilities.append(visible)
-                                        types.append(FE._etype)
-                                        locations.append(element_loc)
+                            #         if matched_rule is not None:
+                            #             # one label can only correspond to one input, the label cannot be re-assigned to other inputs
+                            #             self._labels_locations.pop(np.argsort(input_ele_to_labels_dist)[0])
+                            #             filter_elements.append(element)
+                            #             filter_elements_dom.append(element_dom)
+                            #             rules.append(matched_rule)
+                            #             visibilities.append(visible)
+                            #             types.append(FE._etype)
+                            #             locations.append(element_loc)
 
                 if matched_rule is None:
                     matched_rule = FormElement._DEFAULT_RULE
