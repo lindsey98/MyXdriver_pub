@@ -36,10 +36,12 @@ cd MyXdriver_pub
 3. run `./setup.sh`
 
 **Usage**
+-
 - Automatic form filling: See testing/formfill.py
 - Phishing detection based on suspicious behaviors during login: See testing/webinteraction.py
 
 **Reference**
+-
 If you find our tool helpful, please consider citing our paper
 ```bibtex
  @inproceedings {291106,
