@@ -11,6 +11,8 @@ Supported functionalities:
 - ✅ Detect the presence of reCaptcha
 - ✅ Detect the presence of error messages
 - ✅ Observe the suspicious behaviors during login action
+   - 🏁 Let users proceed without verification on fake credentials
+   - 🏁 Redirect to third-party webpage after form submission
 
 **System Overview**
 -
