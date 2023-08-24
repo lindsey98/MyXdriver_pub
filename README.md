@@ -18,7 +18,7 @@ Supported functionalities:
 -
 We build an interaction webdriver (Selenium-based) to automatically perform form filling, form submission, and webpage transition detection.
 Our main goal is to report suspicious behaviors during the login process, such as (1) no verification of fake account details and (2) evasive redirection to third-party websites upon form submission. 
-<img src='WebInteraction Diagram-2.png' style="width:3000px;height:650px"/>
+<img src='WebInteraction Diagram.png'/>
 
 
 **Setup**
