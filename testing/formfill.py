@@ -7,7 +7,7 @@ from xdriver.xutils.PhishIntentionWrapper import PhishIntentionWrapper
 import time
 
 if __name__ == '__main__':
-    orig_url = "https://reg.ebay.com/reg/PartialReg"
+    orig_url = "https://signup.ebay.com/pa/crte"
     sleep_time = 3; timeout_time = 60
     XDriver.set_headless()
     driver = XDriver.boot(chrome=True)
