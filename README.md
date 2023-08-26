@@ -37,6 +37,7 @@ cd MyXdriver_pub
 3. run `./setup.sh`
 
 **Usage**
+-
 - Automatic form filling: See test script [testing/formfill.py](https://github.com/lindsey98/MyXdriver_pub/blob/master/testing/formfill.py)
    - Locate all inputs: [xutils.forms.Form.Form._get_input_elements](https://github.com/lindsey98/MyXdriver_pub/blob/master/xutils/forms/Form.py#L139)
    - Locate the submission button [xutils.forms.Form.Form._get_button_elements](https://github.com/lindsey98/MyXdriver_pub/blob/master/xutils/forms/Form.py#L260)
