@@ -350,6 +350,7 @@ class XDriver(Chrome, Firefox):
         from xdriver.browsers.OXDriver import OXDriver
 
         if isinstance(self, CXDriver) or isinstance(self, OXDriver):  # Chrome, Opera
+            # os.chmod(kwargs.get("executable_path"), 0o755)
             Chrome.__init__(self,
                             ChromeDriverManager().install(), # install latest version
                             # executable_path=kwargs.get("executable_path"),
