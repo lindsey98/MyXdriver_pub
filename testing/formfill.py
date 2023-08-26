@@ -11,6 +11,7 @@ if __name__ == '__main__':
     sleep_time = 3; timeout_time = 60
     XDriver.set_headless()
     driver = XDriver.boot(chrome=True)
+    time.sleep(sleep_time)
     driver.set_script_timeout(timeout_time / 2)
     driver.set_page_load_timeout(timeout_time)
     time.sleep(sleep_time)
