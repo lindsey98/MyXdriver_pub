@@ -1,8 +1,12 @@
 **MyXdriver**
 -
 In this repository, we build a system to automatically decide the maliciousness of a phishing webpage through its behaviors. 
+
 This repository includes partial code for our paper "Knowledge Expansion and Counterfactual Interaction for Reference-Based Phishing Detection".
-Published in USENIX Security 2023. The main repository is here: https://github.com/code-philia/Dynaphish 
+Published in USENIX Security 2023. 
+
+The main repository is here: https://github.com/code-philia/Dynaphish 
+
 Supported functionalities:
 - ✅ Locate all inputs, submission buttons, etc.
 - ✅ Decide the semantics of inputs and fill in faked credentials
