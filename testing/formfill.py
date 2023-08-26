@@ -43,7 +43,7 @@ if __name__ == '__main__':
 
     # scrolling only happens at the first time, otherwise the screenshot changes just because we scroll it, e.g.: deepl.com
     # button maybe at the bottom, need to decide when to scroll
-    if (not form._button_visibilities[0]):
+    if len(form._button_visibilities)>0 and (not form._button_visibilities[0]):
         Logger.spit("Scroll to the bottom since the buttons are invisible", debug=True,
                     caller_prefix=XDriver._caller_prefix)
         driver.scroll_to_bottom()
