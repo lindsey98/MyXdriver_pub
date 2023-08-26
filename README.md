@@ -24,7 +24,7 @@ Our main goal is to report suspicious behaviors during the login process, such a
 
 **Setup**
 -
-Implemented and tested on Ubuntu 16.04 and 20.04 with python 3.8. Should work on other Debian-based systems as well.
+Implemented and tested on Ubuntu 16.04 and 20.04 with Python 3.8. Should work on other Debian-based systems as well.
 1.  
 Clone this MyXDriver_pub repo and `cd` into it
  ```
@@ -37,9 +37,30 @@ cd MyXdriver_pub
 3. run `./setup.sh`
 
 **Usage**
--
-- Automatic form filling: See testing/formfill.py
-- Phishing detection based on suspicious behaviors during login: See testing/webinteraction.py
+- Automatic form filling: See test script [testing/formfill.py](https://github.com/lindsey98/MyXdriver_pub/blob/master/testing/formfill.py)
+   - Locate all inputs: [xutils.forms.Form.Form._get_input_elements](https://github.com/lindsey98/MyXdriver_pub/blob/master/xutils/forms/Form.py#L139)
+   - Locate the submission button [xutils.forms.Form.Form._get_button_elements](https://github.com/lindsey98/MyXdriver_pub/blob/master/xutils/forms/Form.py#L260)
+   - Decide the semantics of inputs: [xutils.forms.FormElement.FormElement._decide_rule_inputs](https://github.com/lindsey98/MyXdriver_pub/blob/master/xutils/forms/FormElement.py#L284)
+   - Fill in all inputs: [xutils.forms.Form.Form.fill_all_inputs](https://github.com/lindsey98/MyXdriver_pub/blob/master/xutils/forms/Form.py#L396)
+   - Form submission: [xutils.forms.Form.Form.submit](https://github.com/lindsey98/MyXdriver_pub/blob/master/xutils/forms/Form.py#L418)
+     
+- Track webpage state
+   - Check whether the webpage is empty: [xutils.state.StateClass StateClass.empty_page](https://github.com/lindsey98/MyXdriver_pub/blob/master/xutils/state/StateClass.py#L248)
+   - Check whether the webpage is a credential-requiring page or not: [xutils.state.StateClass.StateClass.is_CRP](https://github.com/lindsey98/MyXdriver_pub/blob/master/xutils/state/StateClass.py#L70)
+   - Check whether the webpage has been redirected to a different domain: [xutils.state.StateClass.StateClass.does_redirection](https://github.com/lindsey98/MyXdriver_pub/blob/master/xutils/state/StateClass.py#L86)
+   - Detect the presence of reCaptcha: [xutils.state.StateClass.StateClass.recaptcha_displayed](https://github.com/lindsey98/MyXdriver_pub/blob/master/xutils/state/StateClass.py#L135)
+   - Detect the presence of error messages: [xutils.state.StateClass.StateClass.has_error_message_displayed](https://github.com/lindsey98/MyXdriver_pub/blob/master/xutils/state/StateClass.py#L151)
+     
+- Phishing detection based on suspicious behaviors during login: See [testing/webinteraction.py](https://github.com/lindsey98/MyXdriver_pub/blob/master/testing/webinteraction.py)
+   - Redirection to third-party websites: [xutils.WebInteraction.WebInteraction.get_benign](https://github.com/lindsey98/MyXdriver_pub/blob/master/xutils/WebInteraction.py#L268-L294)
+   - No verification on fake credentials: [xutils.WebInteraction.WebInteraction.get_benign](https://github.com/lindsey98/MyXdriver_pub/blob/master/xutils/WebInteraction.py#L336-L359)
+ 
+- Miscellaneous: For other utilities, please refer to [XDriver.py](https://github.com/lindsey98/MyXdriver_pub/blob/master/XDriver.py)
+   - Get DOM path for an element: [XDriver.XDriver.get_dompath](https://github.com/lindsey98/MyXdriver_pub/blob/master/XDriver.py#L1276)
+   - Get the coordinate for an element: [XDriver.XDriver.get_location](https://github.com/lindsey98/MyXdriver_pub/blob/master/XDriver.py#L1318)
+   - Retrieve the elements given a list of coordinates: [XDriver.XDriver.get_all_elements_from_coordinate_list](https://github.com/lindsey98/MyXdriver_pub/blob/master/XDriver.py#L1551)
+   - Get all potential clickable elements: [XDriver.XDriver.get_all_clickable_elements](https://github.com/lindsey98/MyXdriver_pub/blob/master/XDriver.py#L1730)
+   - Obfuscate buttons as images: [XDriver.XDriver.obfuscate_page](https://github.com/lindsey98/MyXdriver_pub/blob/master/XDriver.py#L1852)
 
 **Reference**
 -
