@@ -227,7 +227,9 @@ cd xutils/forms/button_locator_models/
 if [ -e "$output_file" ]; then
   echo "button locator model already exists ..."
 else
-  wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate 'https://docs.google.com/uc?export=download&id='$file_id -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=$file_id" -O "$output_file" && rm -rf /tmp/cookies.txt
+  git clone https://huggingface.co/Kelsey98/MyXdriver
+  mv MyXdriver/* .
+  rm -rf MyXdriver/
 fi
 cd ../../../
 
