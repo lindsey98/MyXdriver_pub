@@ -221,7 +221,6 @@ else
 fi
 
 # download submission button locator model
-file_id="1ouhn17V2ylzKnLIbrP-IpV7Rl7pmHtW-"
 output_file="model_final.pth"
 cd xutils/forms/button_locator_models/
 if [ -e "$output_file" ]; then
