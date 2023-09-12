@@ -288,10 +288,10 @@ class FormElement():
 
 		if etag == "textarea" or etag == "input" or etype in ["text", "password", "number", "tel", "search", "email"]:
 			for lbl in self._str_tokenized:
-				try:
-					lbl = self.translator.translate(lbl, dest='en').text
-				except:
-					pass
+				#try:
+				#	lbl = self.translator.translate(lbl, dest='en').text
+				#except:
+				#	pass
 				for rule in self._input_rules:
 					if re.search(rule, lbl, re.IGNORECASE):
 						fill_rule = rule
@@ -303,10 +303,10 @@ class FormElement():
 
 	def _decide_input_rule_given_str(self, str_tokenized):
 		fill_rule = None
-		try:
-			str_tokenized = self.translator.translate(str_tokenized, dest='en').text
-		except:
-			pass
+		# try:
+		# 	str_tokenized = self.translator.translate(str_tokenized, dest='en').text
+		# except:
+		# 	pass
 		for rule in self._input_rules:
 			if rule == FormElement._DEFAULT_RULE:
 				continue
@@ -316,10 +316,10 @@ class FormElement():
 		return fill_rule
 
 	def _decide_button_rule_given_str(self, str_tokenized):
-		try:
-			str_tokenized = self.translator.translate(str_tokenized, dest='en').text
-		except:
-			pass
+		# try:
+		# 	str_tokenized = self.translator.translate(str_tokenized, dest='en').text
+		# except:
+		# 	pass
 		m_forbidden = re.search(self._button_rules_forbidden, str_tokenized, re.IGNORECASE)
 		m = re.search(self._button_rules, str_tokenized, re.IGNORECASE)
 		if m and m_forbidden is None:
@@ -435,19 +435,19 @@ class FormElement():
 			matched_result2_bidden = None
 
 			if etext: # has text
-				try:
-					etext = self.translator.translate(etext, dest='en').text
-				except:
-					pass
+				# try:
+				# 	etext = self.translator.translate(etext, dest='en').text
+				# except:
+				# 	pass
 				if '\n' not in etext:  # too long, dont bother
 					matched_result1 = re.search(self._button_rules, etext, re.IGNORECASE)
 					matched_result1_bidden = re.search(self._button_rules_forbidden, etext, re.IGNORECASE)
 
 			if evalue: # has value
-				try:
-					evalue = self.translator.translate(evalue, dest='en').text
-				except:
-					pass
+				# try:
+				# 	evalue = self.translator.translate(evalue, dest='en').text
+				# except:
+				# 	pass
 				matched_result2 = re.search(self._button_rules, evalue, re.IGNORECASE)
 				matched_result2_bidden = re.search(self._button_rules_forbidden, evalue, re.IGNORECASE)
 
