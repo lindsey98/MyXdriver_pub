@@ -25,6 +25,9 @@ We build an interaction webdriver (Selenium-based) to automatically perform form
 Our main goal is to report suspicious behaviors during the login process, such as (1) no verification of fake account details and (2) evasive redirection to third-party websites upon form submission. 
 <img src='WebInteraction Diagram.png'/>
 
+**Updates**
+-
+- [2023-09-12] 🍋🍋🍋🍋🍋🍋🍋 If you want to speed up, you can switch to the "**simple**" branch. 🍋🍋🍋🍋🍋🍋🍋🍋
 
 **Setup**
 -
