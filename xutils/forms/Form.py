@@ -42,7 +42,7 @@ class Form():
         # find clickable buttons
         self._buttons, self._buttons_dom, self._button_rules, self._button_visibilities, self._buttons_locations = self._get_button_elements()
 
-        # self._all_numeric_buttons = self._driver.get_all_numeric_buttons()
+        self._all_numeric_buttons = self._driver.get_all_numeric_buttons()
 
         Logger.spit("Number of inputs = {}, Number of buttons = {}".format(len(self._inputs), len(self._buttons)),
                     debug=True, caller_prefix=Form._caller_prefix)
