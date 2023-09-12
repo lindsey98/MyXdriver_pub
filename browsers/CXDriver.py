@@ -88,10 +88,15 @@ class CXDriver(XDriver):
 
 		_chromeOpts.add_argument("--disable-blink-features=AutomationControlled")
 
+		proxy = "127.0.0.1:7890"
+                _chromeOpts.add_argument(f'--proxy-server={proxy}')
+
 		_capabilities = DesiredCapabilities.CHROME
 		_capabilities["goog:loggingPrefs"] = {"performance": "ALL"}  # chromedriver 75+
 		_capabilities["unexpectedAlertBehaviour"] = "dismiss"  # handle alert
 		_capabilities["pageLoadStrategy"] = "eager"  # eager mode #FIXME: set eager mode, may load partial webpage
+
+		
 		#################
 		if CXDriver._base_config["browser"]["enabled"]:
 			for option in CXDriver._base_config["browser"]:
@@ -111,17 +116,17 @@ class CXDriver(XDriver):
 
 		''' The general proxy order is: internal proxy -> user proxy -> tor
 		'''
-		self._proxy = None
-		if CXDriver._base_config["internal_proxy"]["enabled"]: # In any proxy configuration (e.g. proxy, custom proxy, tor), our internal proxy goes first
-			self._proxy = ProxyWrapper(port = CXDriver._base_config["internal_proxy"].get("port", None), strip_media = CXDriver._base_config["internal_proxy"].get("strip_media", False), tor = CXDriver._base_config["tor"], custom_proxy = CXDriver._base_config["proxy"])
-			self._proxy_port = self._proxy.get_port()
-			_chromeOpts.add_argument("--proxy-server=%s://%s:%s" % (CXDriver._base_config["internal_proxy"]["scheme"], CXDriver._base_config["internal_proxy"]["host"], self._proxy_port))
+		# self._proxy = None
+		# if CXDriver._base_config["internal_proxy"]["enabled"]: # In any proxy configuration (e.g. proxy, custom proxy, tor), our internal proxy goes first
+		# 	self._proxy = ProxyWrapper(port = CXDriver._base_config["internal_proxy"].get("port", None), strip_media = CXDriver._base_config["internal_proxy"].get("strip_media", False), tor = CXDriver._base_config["tor"], custom_proxy = CXDriver._base_config["proxy"])
+		# 	self._proxy_port = self._proxy.get_port()
+		# 	_chromeOpts.add_argument("--proxy-server=%s://%s:%s" % (CXDriver._base_config["internal_proxy"]["scheme"], CXDriver._base_config["internal_proxy"]["host"], self._proxy_port))
 
-		if CXDriver._base_config["proxy"]["enabled"] and not CXDriver._base_config["internal_proxy"]["enabled"]: # If no internal proxy is enabled, configure browser to use custom proxy directly
-			_chromeOpts.add_argument("--proxy-server=%s://%s:%s" % (CXDriver._base_config["proxy"]["scheme"], CXDriver._base_config["proxy"]["host"], CXDriver._base_config["proxy"]["port"]))
+		# if CXDriver._base_config["proxy"]["enabled"] and not CXDriver._base_config["internal_proxy"]["enabled"]: # If no internal proxy is enabled, configure browser to use custom proxy directly
+		# 	_chromeOpts.add_argument("--proxy-server=%s://%s:%s" % (CXDriver._base_config["proxy"]["scheme"], CXDriver._base_config["proxy"]["host"], CXDriver._base_config["proxy"]["port"]))
 
-		if CXDriver._base_config["tor"]["enabled"] and not CXDriver._base_config["proxy"]["enabled"] and not CXDriver._base_config["internal_proxy"]["enabled"]: # Route everything directly through TOR (no intermmediate proxy)
-			_chromeOpts.add_argument("--proxy-server=%s://%s:%s" % (CXDriver._base_config["tor"]["scheme"], CXDriver._base_config["tor"]["host"], CXDriver._base_config["tor"]["port"]))
+		# if CXDriver._base_config["tor"]["enabled"] and not CXDriver._base_config["proxy"]["enabled"] and not CXDriver._base_config["internal_proxy"]["enabled"]: # Route everything directly through TOR (no intermmediate proxy)
+		# 	_chromeOpts.add_argument("--proxy-server=%s://%s:%s" % (CXDriver._base_config["tor"]["scheme"], CXDriver._base_config["tor"]["host"], CXDriver._base_config["tor"]["port"]))
 
 		os.environ['DISPLAY'] = os.environ.get('DISPLAY', ':0') # By default output instance to the environment `DISPLAY` (can be already set)
 		self._virtual_display = None
