@@ -26,7 +26,8 @@ Our main goal is to report suspicious behaviors during the login process, such a
 <img src='WebInteraction Diagram.png'/>
 
 **Updates**
--
+- 
+- [2023-09-23] ❗❗❗ Somehow the model downloading in setup.sh does not always work because of the git lfs limit 😢 , alternatively, you can download the model_final.pth from [this link](https://drive.google.com/file/d/1ouhn17V2ylzKnLIbrP-IpV7Rl7pmHtW-/view?usp=sharing). 
 - [2023-09-12] 🍋🍋🍋🍋🍋🍋🍋 If you want to speed up, you can switch to the "**simple**" branch. 🍋🍋🍋🍋🍋🍋🍋🍋
 
 **Setup**
