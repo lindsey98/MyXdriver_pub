@@ -77,15 +77,14 @@ class XDriver(Chrome, Firefox):
     _base_config = {
         "browser": {
             # High-level browser options. These will be translated to actual browser-specific options by the selected subclass
-            "enabled": True,
-            # If False, don't use any command line arguments in browser (other than proxy/tor stuff, if enabled)
+            "enabled": True, # If False, don't use any command line arguments in browser (other than proxy/tor stuff, if enabled)
             "no_ssl_errors": True,  # Supress browser-level SSL errors
             "disable_notifications": True,  # Disable push notifications
             "maximized": True,  # Start browser window maximized
             "no_default_browser_check": True,  # Prevent popup to make browser the default (if this is a fresh instance)
             "disable_cache": True,  # Disable all possible levels of cache
             "profile": None,  # Use specific profile. If None, a temporary new one will be generated
-            "headless": False,  # Start headless
+            "headless": True,  # Start headless
             "virtual": False,  # Use vrtual display
             "vpn": False,  # Opera built-in VPN -- Not currently supported
             "no_blink_feature": True
