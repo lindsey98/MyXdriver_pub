@@ -47,15 +47,7 @@ class CXDriver(XDriver):
 			"download_restrictions": 3,
 			"download.prompt_for_download": False,
 			"download.default_directory": "trash/",
-			# "profile.managed_default_content_settings.images": 2,
 			"profile.default_content_setting_values.notifications": 2,
-			# "profile.managed_default_content_settings.stylesheets": 2,
-			"profile.managed_default_content_settings.cookies": 2,
-			# "profile.managed_default_content_settings.javascript": 1,
-			# "profile.managed_default_content_settings.plugins": 1,
-			# "profile.managed_default_content_settings.popups": 2,
-			"profile.managed_default_content_settings.geolocation": 2,
-			# "profile.managed_default_content_settings.media_stream": 2,
 
 		}
 
@@ -65,29 +57,14 @@ class CXDriver(XDriver):
 		_chromeOpts.add_argument("--no-sandbox")
 		_chromeOpts.add_argument("--disable-dev-shm-usage")
 		_chromeOpts.add_argument('--disable-gpu')
-		_chromeOpts.add_argument("--enable-logging=stderr --v=1")
-		_chromeOpts.add_argument('--disable-site-isolation-trials')
-		# TODO: replace with your own user-agent
-		_chromeOpts.add_argument(
-			"user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36")
-		_chromeOpts.add_argument("--use-fake-ui-for-media-stream")
-		_chromeOpts.add_argument("--use-fake-device-for-media-stream")
-		_chromeOpts.add_argument("--disable-plugins")
-		_chromeOpts.add_argument("--log-level=2")
 		_chromeOpts.add_argument("--window-size=1920,1080")  # fix screenshot size
 		_chromeOpts.add_argument("--lang=en")
 
 		_chromeOpts.set_capability('unhandledPromptBehavior', 'dismiss')  # dismiss
 		_chromeOpts.set_capability('pageLoadStrategy', 'eager')
 
-
 		_chromeOpts.add_experimental_option("prefs", prefs)
-		_chromeOpts.add_experimental_option('useAutomationExtension', False)
-		_chromeOpts.add_experimental_option("excludeSwitches", ["enable-automation"])
-		_chromeOpts.add_experimental_option("excludeSwitches", ["disable-popup-blocking"])
-
-		_chromeOpts.add_argument("--disable-blink-features=AutomationControlled")
-
+		
 		_capabilities = DesiredCapabilities.CHROME
 		_capabilities["goog:loggingPrefs"] = {"performance": "ALL"}  # chromedriver 75+
 		_capabilities["unexpectedAlertBehaviour"] = "dismiss"  # handle alert
