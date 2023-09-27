@@ -226,10 +226,8 @@ cd xutils/forms/button_locator_models/
 if [ -e "$output_file" ]; then
   echo "button locator model already exists ..."
 else
-  git lfs install
-  git clone https://huggingface.co/Kelsey98/MyXdriver
-  mv MyXdriver/* .
-  rm -rf MyXdriver/
+  pip install gdown
+  gdown --id 1ouhn17V2ylzKnLIbrP-IpV7Rl7pmHtW-
 fi
 cd ../../../
 
