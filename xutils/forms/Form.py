@@ -35,8 +35,6 @@ class Form():
         self.obfuscate = obfuscate
         self._rule_matching = rule_matching
 
-        # find labels and their coordinates
-        # self._labels_locations = self.get_labels_elements_cv()  # fixme
         # find inputs
         self._inputs, self._inputs_dom, self._input_rules, self._input_visibilities, self._input_etypes, self._inputs_locations = self._get_input_elements()
         # find clickable buttons
@@ -47,33 +45,6 @@ class Form():
         Logger.spit("Number of inputs = {}, Number of buttons = {}".format(len(self._inputs), len(self._buttons)),
                     debug=True, caller_prefix=Form._caller_prefix)
 
-    # def erase_input_placeholder(self):
-    #     self._driver._invoke(self._driver.execute_script, '''
-    #         let inputslist = document.getElementsByTagName('input');
-    #         for (let i = 0; i <= inputslist.length; i++) {
-    #             let input = inputslist[i];
-    #             console.log(input);
-
-    #             try{
-    #                 let nodetag = input.tagName.toLowerCase();
-    #                 let etype = input.type;
-    #                 let location = get_loc(input);
-    #                 if (nodetag == "select" || etype == "submit" || etype == "button" || etype == "image" || etype == "reset" || etype == "radio" || etype == "checkbox" || etype == "hidden") {
-    #                     continue;
-    #                 }
-    #                 if (location[2] - location[0] <= 5 || location[3] - location[1] <= 5){
-    #                     continue;
-    #                 }
-    #                 // element obfuscation
-    #                 input.setAttribute('placeholder','');
-    #             }
-    #             catch(err){
-    #                 console.log(err);
-    #                 continue;
-    #             }
-    #         } 
-    #     '''
-    #                          )
 
     """
 		Reinitialize when the screenshot has changed
@@ -143,13 +114,6 @@ class Form():
             self.erase_input_placeholder()
         elements_loc = list(map(lambda e: self._driver.get_location(e), elements))
 
-        # cv_elements, cv_elements_dom, cv_elements_loc = self.get_input_elements_cv()  # also add the input elements reported from CV
-        # for it, b in enumerate(cv_elements):
-        #     if b not in elements:
-        #         elements.append(b)
-        #         elements_dom.append(cv_elements_dom[it])
-        #         elements_loc.append(cv_elements_loc[it])
-
         filter_elements = []
         filter_elements_dom = []
         rules = []
@@ -173,72 +137,8 @@ class Form():
                     visibilities.append(visible)
                     types.append(FE._etype)
                     locations.append(element_loc)
-                # else:
-                #     if visible:
-                #         # Step2: use regex to match OCR result
-                #         start_time = time.time()
-                #         ocr_string_this_input = self._call_ocr(element_loc)
-                #         end_time = time.time()
-                #         Logger.spit("Run OCR on input element {} takes time: {:.4f}s".format(jj, end_time - start_time),
-                #                     debug=True, caller_prefix=Form._caller_prefix)
-                #         matched_rule = FE._decide_input_rule_given_str(ocr_string_this_input)
-                #         if matched_rule is not None:
-                #             filter_elements.append(element)
-                #             filter_elements_dom.append(element_dom)
-                #             rules.append(matched_rule)
-                #             visibilities.append(visible)
-                #             types.append(FE._etype)
-                #             locations.append(element_loc)
 
-                        # else:
-                        #     # Step3: use regex to match the label near the input
-                        #     # 3.1 get previous sibling element
-                        #     closest_label = self._driver.get_element_prev_sibling(element)
-                        #     start_time = time.time()
-                        #     ocr_string_label = self._call_ocr_element(closest_label)
-                        #     end_time = time.time()
-                        #     Logger.spit("Run OCR on input element {} 's nearest label takes time: {:.4f}s".format(jj,
-                        #                                                                                           end_time - start_time),
-                        #                 debug=True, caller_prefix=Form._caller_prefix)
-                        #     matched_rule = FE._decide_input_rule_given_str(ocr_string_label)
-
-                        #     if matched_rule is not None:
-                        #         filter_elements.append(element)
-                        #         filter_elements_dom.append(element_dom)
-                        #         rules.append(matched_rule)
-                        #         visibilities.append(visible)
-                        #         types.append(FE._etype)
-                        #         locations.append(element_loc)
-
-                            # else:
-                            #     # 3.2 get PhishIntention reported labels
-                            #     if len(self._labels_locations) > 0:
-                            #         input_ele_to_labels_dist, *_ = bbox_boarder_dist_simple(
-                            #             [self._driver.get_location(element)],
-                            #             self._labels_locations)
-                            #         input_ele_to_labels_dist = input_ele_to_labels_dist[0]  # N_labels
-                            #         closest_label_loc = self._labels_locations[np.argsort(input_ele_to_labels_dist)[0]]
-
-                            #         start_time = time.time()
-                            #         ocr_string_label = self._call_ocr(closest_label_loc)
-                            #         end_time = time.time()
-                            #         Logger.spit(
-                            #             "Run OCR on input element {} 's nearest label takes time: {:.4f}s".format(
-                            #                 jj, end_time - start_time),
-                            #             debug=True, caller_prefix=Form._caller_prefix)
-                            #         matched_rule = FE._decide_input_rule_given_str(ocr_string_label)
-
-                            #         if matched_rule is not None:
-                            #             # one label can only correspond to one input, the label cannot be re-assigned to other inputs
-                            #             self._labels_locations.pop(np.argsort(input_ele_to_labels_dist)[0])
-                            #             filter_elements.append(element)
-                            #             filter_elements_dom.append(element_dom)
-                            #             rules.append(matched_rule)
-                            #             visibilities.append(visible)
-                            #             types.append(FE._etype)
-                            #             locations.append(element_loc)
-
-                if matched_rule is None:
+                else:
                     matched_rule = FormElement._DEFAULT_RULE
                     filter_elements.append(element)
                     filter_elements_dom.append(element_dom)
