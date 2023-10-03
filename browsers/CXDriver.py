@@ -22,13 +22,13 @@ class CXDriver(XDriver):
 	_abs_profiles_path = "/tmp"
 
 	_arg_mappings = {
-		"no_ssl_errors" : ["--ignore-certificate-errors"],
+		# "no_ssl_errors" : ["--ignore-certificate-errors"],
 		"disable_notifications" : ["--disable-notifications"],
 		"maximized" : ["--start-maximized"],
-		"no_default_browser_check" : ["--no-default-browser-check"],
-		"disable_cache" : ["--disk-cache-dir=/dev/null", "--disk-cache-size=1"],
+		# "no_default_browser_check" : ["--no-default-browser-check"],
+		# "disable_cache" : ["--disk-cache-dir=/dev/null", "--disk-cache-size=1"],
 		"headless" : ["--headless"],
-		"no_blink_feature": ["--disable-blink-features=AutomationControlled"],
+		# "no_blink_feature": ["--disable-blink-features=AutomationControlled"],
 	}
 
 	_recoverable_crashes = ["chrome not reachable", "page crash",
