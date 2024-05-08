@@ -240,6 +240,7 @@ if echo "$installed_packages" | grep -q "$PACKAGE_NAME"; then
 else
   git clone https://github.com/lindsey98/PhishIntention.git
   cd PhishIntention
+  git checkout development
   chmod +x ./setup.sh
   ./setup.sh
   cd ../
