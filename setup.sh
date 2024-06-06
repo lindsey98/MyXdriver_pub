@@ -202,11 +202,9 @@ function check_xvfb {
 check_browsers
 check_mitm
 check_xvfb
-# # Create a new conda environment with Python 3.8
-# Source the Conda configuration
+
 CONDA_BASE=$(conda info --base)
 source "$CONDA_BASE/etc/profile.d/conda.sh"
-ENV_NAME="myenv"
 
 # Check if the environment already exists
 conda info --envs | grep -w "$ENV_NAME" > /dev/null
@@ -226,8 +224,8 @@ cd xutils/forms/button_locator_models/
 if [ -e "$output_file" ]; then
   echo "button locator model already exists ..."
 else
-  pip install gdown
-  gdown --id 1ouhn17V2ylzKnLIbrP-IpV7Rl7pmHtW-
+  conda run -n "$ENV_NAME" pip install gdown
+  conda run -n "$ENV_NAME" gdown --id 1ouhn17V2ylzKnLIbrP-IpV7Rl7pmHtW-
 fi
 cd ../../../
 
@@ -238,11 +236,10 @@ installed_packages=$(conda run -n "$ENV_NAME" conda list)
 if echo "$installed_packages" | grep -q "$PACKAGE_NAME"; then
   echo "$PACKAGE_NAME is already installed, skip installation"
 else
-  git clone https://github.com/lindsey98/PhishIntention.git
+  git clone -b development --single-branch https://github.com/lindsey98/PhishIntention.git
   cd PhishIntention
-  git checkout development
   chmod +x ./setup.sh
-  ./setup.sh
+  export ENV_NAME="$ENV_NAME" && ./setup.sh
   cd ../
   rm -rf PhishIntention
 fi
